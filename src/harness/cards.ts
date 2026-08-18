@@ -26,6 +26,13 @@ export interface CardHooks {
   onRerender?(specText: string): void;
 }
 
+export interface PlaybackPrefs {
+  mode: "narrated" | "silent" | "instant";
+  speed: number;
+  onMode?(mode: "narrated" | "silent" | "instant"): void;
+  onSpeed?(speed: number): void;
+}
+
 export interface Card {
   root: HTMLElement;
   stageHost: HTMLElement;
@@ -39,7 +46,7 @@ export interface Card {
   destroy(): void;
 }
 
-export function createCard(title: string, subtitle: string, hooks: CardHooks = {}): Card {
+export function createCard(title: string, subtitle: string, hooks: CardHooks = {}, prefs: PlaybackPrefs = { mode: "narrated", speed: 1 }): Card {
   const status = h("div", { class: "card-status" });
   const stageHost = h("div", { class: "card-stage-host" });
   const titleEl = h("div", { class: "card-title" }, title);
@@ -121,12 +128,11 @@ export function createCard(title: string, subtitle: string, hooks: CardHooks = {
     const stepInd = h("span", { class: "step-indicator" }, `0/${total}`);
     const modeSel = h("select", { class: "cs-bar-select", title: "Playback mode" });
     for (const m of ["narrated", "silent", "instant"]) modeSel.appendChild(h("option", { value: m }, m));
+    modeSel.value = prefs.mode;
     const speedSel = h("select", { class: "cs-bar-select", title: "Speed multiplier" });
-    for (const s of ["0.5", "0.75", "1", "1.5", "2"]) {
-      const o = h("option", { value: s }, `${s}×`);
-      if (s === "1") o.setAttribute("selected", "");
-      speedSel.appendChild(o);
-    }
+    for (const s of ["0.5", "0.75", "1", "1.25", "1.5", "2"]) speedSel.appendChild(h("option", { value: s }, `${s}×`));
+    speedSel.value = String(prefs.speed);
+    if (!speedSel.value) speedSel.value = "1";
     const bar = h("div", { class: "cs-controlbar" }, playBtn, backBtn, fwdBtn, progress, stepInd, modeSel, speedSel);
     stage.appendChild(bigPlay);
     // The bar lives below the drawing so it never covers axis labels.
@@ -143,8 +149,16 @@ export function createCard(title: string, subtitle: string, hooks: CardHooks = {
     playBtn.addEventListener("click", togglePlay);
     backBtn.addEventListener("click", () => hd.timeline.stepBack());
     fwdBtn.addEventListener("click", () => hd.timeline.stepForward());
-    modeSel.addEventListener("change", () => hd.timeline.setMode(modeSel.value as "narrated" | "silent" | "instant"));
-    speedSel.addEventListener("change", () => hd.timeline.setSpeed(parseFloat(speedSel.value)));
+    modeSel.addEventListener("change", () => {
+      const m = modeSel.value as "narrated" | "silent" | "instant";
+      hd.timeline.setMode(m);
+      prefs.onMode?.(m);
+    });
+    speedSel.addEventListener("change", () => {
+      const s = parseFloat(speedSel.value);
+      hd.timeline.setSpeed(s);
+      prefs.onSpeed?.(s);
+    });
     bar.addEventListener("click", (e) => e.stopPropagation());
     // Clicking the drawing itself toggles play/pause, like a video.
     stage.addEventListener("click", togglePlay);
@@ -159,6 +173,8 @@ export function createCard(title: string, subtitle: string, hooks: CardHooks = {
       onState: (s) => {
         stage.classList.toggle("is-playing", s === "playing");
         stage.classList.toggle("is-paused", s === "paused");
+        // Focus mode: fade the controls and the rating/spec section while playing.
+        root.classList.toggle("is-playing", s === "playing");
         playBtn.textContent = s === "playing" ? "⏸" : "▶";
         bigPlay.textContent = s === "done" ? "↺" : "▶";
         bigPlay.title = s === "done" ? "Replay with narration" : "Play with narration";

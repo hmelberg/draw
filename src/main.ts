@@ -322,6 +322,21 @@ interface SpecCardCtx {
   current: { handle: RenderHandle | null };
 }
 
+function playbackPrefs() {
+  return {
+    mode: settings.mode,
+    speed: settings.speed,
+    onMode: (m: typeof settings.mode) => {
+      settings.mode = m;
+      persist();
+    },
+    onSpeed: (s: number) => {
+      settings.speed = s;
+      persist();
+    },
+  };
+}
+
 function newSpecCard(prompt: string, backendName: string, variantName: string): SpecCardCtx {
   const logId = crypto.randomUUID();
   const current: { handle: RenderHandle | null } = { handle: null };
@@ -337,7 +352,7 @@ function newSpecCard(prompt: string, backendName: string, variantName: string): 
       }
     },
     onRerender: (specText) => void rerender(specText),
-  });
+  }, playbackPrefs());
   resultsEl.prepend(card.root);
 
   async function rerender(specText: string): Promise<void> {

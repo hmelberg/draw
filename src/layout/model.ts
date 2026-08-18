@@ -90,17 +90,17 @@ export function defaultStyle(overrides: Partial<ResolvedStyle> = {}): ResolvedSt
  * everything from here.
  */
 export const SKETCH_MS = {
-  stroke: 1800,
-  curve: 2800,
-  axis: 1300,
-  guides: 1200,
-  dot: 550,
-  region: 1700,
-  connector: 1100,
-  node: 1100,
-  priceLine: 1500,
-  arrow: 950,
-  text: 500,
+  stroke: 1400,
+  curve: 2150,
+  axis: 1000,
+  guides: 900,
+  dot: 420,
+  region: 1300,
+  connector: 850,
+  node: 850,
+  priceLine: 1150,
+  arrow: 730,
+  text: 400,
 } as const;
 
 export function defaultDrawOpts(mode: "sketch" | "instant" = "sketch", durationMs?: number): DrawResolved {
