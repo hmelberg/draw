@@ -357,6 +357,17 @@ button:disabled { opacity: 0.5; cursor: default; }
 .bench-list { margin: 0.4rem 0 0.6rem; padding-left: 1.5rem; }
 .bench-list li { margin-bottom: 0.2rem; }
 .bench-list .family { color: var(--muted); font-size: 0.8rem; margin-left: 0.4rem; }
+.bench-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  color: var(--steel);
+  cursor: pointer;
+  text-align: left;
+}
+.bench-link:hover { color: var(--rust); text-decoration: underline dotted; }
 
 .data-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .data-row .count { color: var(--muted); margin-right: 0.5rem; }

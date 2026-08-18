@@ -93,8 +93,18 @@ const benchStatus = h("span", { class: "hint" });
 const benchRunBtn = h("button", {}, "Run benchmark");
 const benchList = h("ol", { class: "bench-list" });
 for (const b of BENCHMARK) {
+  const link = h(
+    "button",
+    { class: "bench-link", title: "Generate just this prompt with the current model/backend/prompt variant" },
+    b.prompt,
+  );
+  link.addEventListener("click", () => {
+    promptEl.value = b.prompt;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    void runConfigs(b.prompt, [settings.backend], [settings.variant], b.family);
+  });
   benchList.appendChild(
-    h("li", {}, b.prompt, h("span", { class: "family" }, `${b.family}${b.curveball ? " · curveball" : ""}`)),
+    h("li", {}, link, h("span", { class: "family" }, `${b.family}${b.curveball ? " · curveball" : ""}`)),
   );
 }
 
