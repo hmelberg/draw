@@ -12,6 +12,8 @@ import timelineManifest from "./timeline/manifest.json";
 import genericAxesManifest from "./generic_axes_diagram/manifest.json";
 import { layoutSupplyDemand, type SupplyDemandParams } from "./supply_demand/layout";
 import { layoutDecisionTree, type DecisionTreeParams } from "./decision_tree/layout";
+import { layoutQalyProfiles, type QalyParams } from "./qaly_profiles/layout";
+import qalyManifest from "./qaly_profiles/manifest.json";
 
 export interface SceneModule {
   manifest: SceneManifest;
@@ -26,6 +28,10 @@ export const scenes: Record<string, SceneModule> = {
   decision_tree: {
     manifest: decisionTreeManifest as SceneManifest,
     layout: (params) => layoutDecisionTree(params as unknown as DecisionTreeParams),
+  },
+  qaly_profiles: {
+    manifest: qalyManifest as SceneManifest,
+    layout: (params) => layoutQalyProfiles(params as QalyParams),
   },
   cost_effectiveness_plane: { manifest: cepManifest as SceneManifest },
   markov_model: { manifest: markovManifest as SceneManifest },

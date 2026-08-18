@@ -1,0 +1,114 @@
+{
+  "name": "qaly_profiles",
+  "status": "ready",
+  "description": "Quality-adjusted life years: health-related quality of life (utility, 0–1) on the y-axis against age/time on the x-axis, one non-linear curve per scenario. The area under a curve is the QALYs of that life; the shaded areas between two curves show QALYs gained (green) and lost (red). Choose this scene for ANY request about QALYs, quality of life over a lifetime, comparing life with vs without treatment, or treatment A vs treatment B. Profiles are described as waypoints — utility can drop suddenly at disease onset, dip at the start of treatment (initial discomfort), bounce back above the untreated path, and end at different death ages. All interpolation, clamping to [0,1], and gain/loss shading is computed for you.",
+  "params_schema": {
+    "type": "object",
+    "properties": {
+      "x_label": { "type": "string", "description": "Default \"Age (years)\"." },
+      "y_label": { "type": "string", "description": "Default \"Quality of life\"." },
+      "x_max": { "type": "number", "description": "Right edge of the time axis. Defaults to just past the latest death age." },
+      "profiles": {
+        "type": "array",
+        "description": "1–3 scenarios, each a utility-over-time curve. Order matters: with two profiles, gain/loss shading defaults to profile 2 vs profile 1 (so put the intervention second).",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string", "description": "Short id used in element ids (curve_<id>, label_<id>)." },
+            "label": { "type": "string", "description": "Legend text shown at the curve." },
+            "color": { "type": "string", "description": "Optional CSS color; sensible defaults otherwise." },
+            "fill": { "type": "boolean", "description": "Shade the area under this curve (its total QALYs). Prefer shade_between for comparisons." },
+            "waypoints": {
+              "type": "array",
+              "description": "Utility waypoints in time order. Between waypoints the curve glides smoothly (non-linear). step: true means the value JUMPS at that age — use it for disease onset or treatment start. A treatment 'bounce' is: step down (initial discomfort), then a waypoint a few years later back up above the untreated path.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "t": { "type": "number", "description": "Age / time." },
+                  "u": { "type": "number", "description": "Utility 0–1 (1 = perfect health, 0 = dead)." },
+                  "step": { "type": "boolean", "description": "Jump to this value at time t (discontinuity)." }
+                },
+                "required": ["t", "u"]
+              }
+            },
+            "death_at": { "type": "number", "description": "Utility drops to 0 here. Treatments that extend life have a later death_at." }
+          }
+        }
+      },
+      "shade_between": {
+        "type": "object",
+        "description": "Shade the areas between two profiles: green where a is above b (QALYs gained), red where a is below b (e.g. initial treatment discomfort). Defaults to profile 2 vs profile 1; set to null to disable.",
+        "properties": {
+          "a": { "type": "string", "description": "Profile id of the intervention/new scenario." },
+          "b": { "type": "string", "description": "Profile id of the comparator." },
+          "gain_label": { "type": "string", "description": "Default \"QALYs gained\"." },
+          "loss_label": { "type": "string", "description": "Default \"Initial loss\". Set to \"\" to hide." }
+        }
+      }
+    }
+  },
+  "element_ids": {
+    "axes": "the coordinate axes",
+    "full_health_line": "dashed line at utility = 1, with tick labels 0 and 1",
+    "curve_<id>": "a profile's utility curve (e.g. curve_with)",
+    "label_<id>": "its legend label",
+    "fill_<id>": "shaded area under a profile (when fill is true)",
+    "gain_regions": "green areas where the intervention is above the comparator",
+    "loss_regions": "red areas where it is below (initial discomfort)",
+    "label_gain / label_loss": "labels on the largest gain/loss areas"
+  },
+  "examples": [
+    {
+      "request": "Show the QALYs gained from surgery compared with no treatment.",
+      "params": {
+        "profiles": [
+          {
+            "id": "without",
+            "label": "Without surgery",
+            "waypoints": [
+              { "t": 0, "u": 0.92 },
+              { "t": 45, "u": 0.85 },
+              { "t": 45, "u": 0.4, "step": true },
+              { "t": 65, "u": 0.28 }
+            ],
+            "death_at": 70
+          },
+          {
+            "id": "with",
+            "label": "With surgery",
+            "waypoints": [
+              { "t": 0, "u": 0.92 },
+              { "t": 45, "u": 0.85 },
+              { "t": 45, "u": 0.25, "step": true },
+              { "t": 48, "u": 0.75 },
+              { "t": 75, "u": 0.6 }
+            ],
+            "death_at": 82
+          }
+        ],
+        "shade_between": { "a": "with", "b": "without" }
+      }
+    },
+    {
+      "request": "Draw a quality of life curve over a lifetime for a chronic disease.",
+      "params": {
+        "profiles": [
+          {
+            "id": "chronic",
+            "label": "Living with the disease",
+            "fill": true,
+            "waypoints": [
+              { "t": 0, "u": 0.95 },
+              { "t": 30, "u": 0.9 },
+              { "t": 30, "u": 0.6, "step": true },
+              { "t": 55, "u": 0.45 },
+              { "t": 70, "u": 0.3 }
+            ],
+            "death_at": 76
+          }
+        ],
+        "shade_between": null
+      }
+    }
+  ]
+}

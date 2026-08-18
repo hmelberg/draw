@@ -19,4 +19,5 @@ export const BENCHMARK: BenchmarkPrompt[] = [
   { n: 8, prompt: "Draw a 2×2 table for sensitivity and specificity.", family: "two_by_two_table" },
   { n: 9, prompt: "Draw a timeline of a screening program from invitation to diagnosis.", family: "timeline", curveball: true },
   { n: 10, prompt: "Illustrate herd immunity as a network of people.", family: "network", curveball: true },
+  { n: 11, prompt: "Show the QALYs gained from a treatment with short-term side effects that extends life.", family: "qaly_profiles" },
 ];
