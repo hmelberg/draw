@@ -1,0 +1,8 @@
+{
+  "name": "generic_axes_diagram",
+  "status": "stub",
+  "description": "Any single-panel curve diagram that is not a supply/demand market: production functions, utility curves, cost curves, dose-response, diminishing returns. NOT IMPLEMENTED YET — compose it with tier-2 elements instead: an axes element with the right labels, curve elements (qualitative direction/curvature/steepness, or an expr like '80*(1 - exp(-0.05*x))' for diminishing marginal returns), optional point elements, and labels attached to the curves.",
+  "params_schema": { "type": "object", "properties": {} },
+  "element_ids": {},
+  "examples": []
+}

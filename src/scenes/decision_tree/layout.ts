@@ -190,7 +190,7 @@ function nodeDrawable(id: string, type: TreeNode["type"], c: Pt): StrokeDrawable
   };
 }
 
-function labelReq(id: string, anchor: Pt, side: LabelRequest["side"], text: string, fontSize: number, color = COLORS.ink): LabelRequest {
+function labelReq(id: string, anchor: Pt, side: LabelRequest["side"], text: string, fontSize: number, color: string = COLORS.ink): LabelRequest {
   return {
     id,
     anchor,

@@ -64,7 +64,7 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
     drawables.push(d);
     order.push(d.id);
   };
-  const label = (id: string, anchor: Pt, side: LabelRequest["side"], text: string, color = COLORS.ink) => {
+  const label = (id: string, anchor: Pt, side: LabelRequest["side"], text: string, color: string = COLORS.ink) => {
     labels.push({
       id,
       anchor,
@@ -109,9 +109,9 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
   }
 
   // Shifted curves
-  for (const [kind, base, shift, color] of [
-    ["demand", demandPts, params.demand_shift, COLORS.demand],
-    ["supply", supplyPts, params.supply_shift, COLORS.supply],
+  for (const [kind, base, shift] of [
+    ["demand", demandPts, params.demand_shift],
+    ["supply", supplyPts, params.supply_shift],
   ] as const) {
     if (!shift || !base) continue;
     const dx = (shift.direction ?? "right") === "right" ? 15 : -15;

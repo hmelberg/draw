@@ -1,0 +1,114 @@
+[
+  {
+    "request": "Draw a demand and supply diagram, then show demand increasing.",
+    "spec": {
+      "title": "Demand increase",
+      "template": "supply_demand",
+      "params": {
+        "demand": { "curvature": "linear", "label": "D" },
+        "supply": { "label": "S" },
+        "equilibrium": { "show": true, "guides": true },
+        "demand_shift": { "direction": "right", "label": "D′" }
+      },
+      "commands": [
+        { "speak": "Price on the vertical axis, quantity on the horizontal." },
+        { "draw": ["axes"] },
+        { "speak": "Demand slopes downward: as price falls, quantity demanded rises." },
+        { "draw": ["demand_curve", "label_D"] },
+        { "speak": "Supply slopes upward: higher prices call forth more production." },
+        { "draw": ["supply_curve", "label_S"] },
+        { "speak": "Where the curves cross, the market clears." },
+        { "draw": ["equilibrium_point", "guide_lines", "label_E", "label_Pstar", "label_Qstar"] },
+        { "pause": 0.5 },
+        { "speak": "Now suppose demand increases: the whole curve shifts to the right." },
+        { "draw": ["demand_shift_curve", "demand_shift_arrow", "label_D_shift"] }
+      ]
+    }
+  },
+  {
+    "request": "Draw a decision tree for choosing between surgery and watchful waiting, with QALY payoffs.",
+    "spec": {
+      "title": "Surgery vs watchful waiting",
+      "template": "decision_tree",
+      "params": {
+        "root": {
+          "id": "choice",
+          "type": "decision",
+          "label": "Choose strategy",
+          "children": [
+            {
+              "label": "Surgery",
+              "node": {
+                "id": "surgery",
+                "type": "chance",
+                "label": "Operate",
+                "children": [
+                  { "label": "Success", "probability": 0.85, "node": { "id": "ok", "type": "terminal", "label": "Recovered", "payoff": 9.2 } },
+                  { "label": "Complication", "probability": 0.15, "node": { "id": "comp", "type": "terminal", "label": "Complication", "payoff": 5.1 } }
+                ]
+              }
+            },
+            { "label": "Watchful waiting", "node": { "id": "wait", "type": "terminal", "label": "No operation", "payoff": 7.4 } }
+          ]
+        }
+      },
+      "commands": [
+        { "speak": "A square is a decision we control: operate, or wait." },
+        { "draw": ["node_choice", "label_choice"] },
+        { "speak": "Surgery leads to a chance node — a circle — because the outcome is uncertain." },
+        { "draw": ["edge_choice_surgery", "branchlabel_choice_surgery", "node_surgery", "label_surgery"] },
+        { "speak": "With probability 0.85 the operation succeeds; with 0.15 there is a complication." },
+        { "draw": ["edge_surgery_ok", "branchlabel_surgery_ok", "node_ok", "label_ok", "payoff_ok", "edge_surgery_comp", "branchlabel_surgery_comp", "node_comp", "label_comp", "payoff_comp"] },
+        { "speak": "Watchful waiting avoids the risk, at a lower expected payoff." },
+        { "draw": ["edge_choice_wait", "branchlabel_choice_wait", "node_wait", "label_wait", "payoff_wait"] }
+      ]
+    }
+  },
+  {
+    "request": "Illustrate diminishing marginal utility.",
+    "spec": {
+      "title": "Diminishing marginal utility",
+      "domain": { "x": [0, 10], "y": [0, 100] },
+      "elements": [
+        { "id": "ax", "type": "axes", "x_label": "Quantity consumed", "y_label": "Total utility" },
+        { "id": "utility", "type": "curve", "expr": "100*(1 - exp(-0.4*x))", "style": { "color": "#2f6b8f" } },
+        { "id": "u_label", "type": "label", "text": "U(x)", "attach_to": "utility", "side": "above" },
+        { "id": "p1", "type": "point", "at": { "x": 2, "y": 55.1 }, "guides": true },
+        { "id": "p2", "type": "point", "at": { "x": 6, "y": 90.9 }, "guides": true },
+        { "id": "note", "type": "label", "text": "Each extra unit adds less", "attach_to": "p2", "side": "below-right" }
+      ],
+      "commands": [
+        { "speak": "Total utility rises as we consume more." },
+        { "draw": ["ax", "utility", "u_label"] },
+        { "speak": "But it rises ever more slowly: the first units matter most." },
+        { "draw": ["p1", "p2"], "parallel": true },
+        { "draw": ["note"] }
+      ]
+    }
+  },
+  {
+    "request": "Draw a Markov model with Healthy, Sick and Dead states.",
+    "spec": {
+      "title": "Three-state Markov model",
+      "elements": [
+        { "id": "healthy", "type": "node", "shape": "circle", "text": "Healthy" },
+        { "id": "sick", "type": "node", "shape": "circle", "text": "Sick" },
+        { "id": "dead", "type": "node", "shape": "circle", "text": "Dead" },
+        { "id": "h_s", "type": "arrow", "from": { "ref": "healthy" }, "to": { "ref": "sick" }, "curved": true },
+        { "id": "s_h", "type": "arrow", "from": { "ref": "sick" }, "to": { "ref": "healthy" }, "curved": true },
+        { "id": "s_d", "type": "arrow", "from": { "ref": "sick" }, "to": { "ref": "dead" }, "curved": true },
+        { "id": "h_d", "type": "arrow", "from": { "ref": "healthy" }, "to": { "ref": "dead" }, "curved": true },
+        { "id": "p_hs", "type": "label", "text": "0.10", "attach_to": "h_s", "side": "above" },
+        { "id": "p_sd", "type": "label", "text": "0.05", "attach_to": "s_d", "side": "right" }
+      ],
+      "commands": [
+        { "speak": "A Markov model describes moving between health states over time." },
+        { "draw": ["healthy", "sick", "dead"], "parallel": true },
+        { "speak": "Each cycle, people can fall ill, recover, or die." },
+        { "draw": ["h_s", "p_hs", "s_h"] },
+        { "draw": ["s_d", "p_sd", "h_d"] },
+        { "speak": "Death is absorbing: no arrows lead back out." }
+      ]
+    }
+  }
+]

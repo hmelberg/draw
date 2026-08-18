@@ -1,0 +1,69 @@
+{
+  "name": "decision_tree",
+  "status": "ready",
+  "description": "A left-to-right decision tree with health-economics conventions: decision nodes are squares, chance nodes are circles, terminal nodes are triangles. Branches carry labels, probabilities, and terminals carry payoffs (e.g. QALYs) and costs. Choose this scene for decision analysis, treatment comparisons, expected-value examples, or any 'decision tree' request. Node positions are computed by a tidy-tree algorithm — never place nodes yourself.",
+  "params_schema": {
+    "type": "object",
+    "properties": {
+      "root": {
+        "type": "object",
+        "description": "The root node (usually a decision). Recursive structure.",
+        "properties": {
+          "id": { "type": "string", "description": "Short id used in element ids (e.g. \"surgery\" → node_surgery). Give every node one so your commands can reference them." },
+          "type": { "type": "string", "enum": ["decision", "chance", "terminal"] },
+          "label": { "type": "string" },
+          "payoff": { "type": "number", "description": "Terminal outcome value (e.g. QALYs)." },
+          "cost": { "type": "number", "description": "Terminal cost, optional." },
+          "children": {
+            "type": "array",
+            "description": "Branches to child nodes.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": { "type": "string", "description": "Branch label (the option or event)." },
+                "probability": { "type": "number", "description": "Branch probability for chance-node branches (0–1)." },
+                "node": { "description": "The child node (same structure as root)." }
+              }
+            }
+          }
+        },
+        "required": ["type", "label"]
+      }
+    },
+    "required": ["root"]
+  },
+  "element_ids": {
+    "node_<id>": "each node's shape (square/circle/triangle), e.g. node_surgery",
+    "edge_<parentId>_<childId>": "the branch line between two nodes",
+    "label_<id>": "a node's text label",
+    "branchlabel_<parentId>_<childId>": "branch label with probability, e.g. \"Success (p=0.9)\"",
+    "payoff_<id>": "payoff/cost text at a terminal"
+  },
+  "examples": [
+    {
+      "request": "Draw a decision tree comparing surgery vs. medication with probabilities and QALY payoffs.",
+      "params": {
+        "root": {
+          "id": "choice",
+          "type": "decision",
+          "label": "Treatment choice",
+          "children": [
+            {
+              "label": "Surgery",
+              "node": {
+                "id": "surgery",
+                "type": "chance",
+                "label": "Surgery",
+                "children": [
+                  { "label": "Success", "probability": 0.9, "node": { "id": "s_ok", "type": "terminal", "label": "Full recovery", "payoff": 9.5 } },
+                  { "label": "Complication", "probability": 0.1, "node": { "id": "s_bad", "type": "terminal", "label": "Complication", "payoff": 4.0 } }
+                ]
+              }
+            },
+            { "label": "Medication", "node": { "id": "med", "type": "terminal", "label": "Medication", "payoff": 7.0 } }
+          ]
+        }
+      }
+    }
+  ]
+}

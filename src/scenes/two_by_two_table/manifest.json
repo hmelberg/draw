@@ -1,0 +1,8 @@
+{
+  "name": "two_by_two_table",
+  "status": "stub",
+  "description": "A 2×2 table (e.g. test result × disease status for sensitivity/specificity). NOT IMPLEMENTED YET — compose it with tier-3 elements instead: four shape elements (shape 'rect', each about 220×140, arranged around the canvas center, e.g. lower-left corners at (280,330), (500,330), (280,190), (500,190)), text elements inside each cell (TP/FP/FN/TN), and text elements outside for the row/column headers. Remember: logical canvas is 1000×750, y-up.",
+  "params_schema": { "type": "object", "properties": {} },
+  "element_ids": {},
+  "examples": []
+}

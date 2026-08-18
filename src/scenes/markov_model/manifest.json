@@ -1,0 +1,8 @@
+{
+  "name": "markov_model",
+  "status": "stub",
+  "description": "A state-transition (Markov) diagram: health states as circles with transition arrows, including self-loops for staying. NOT IMPLEMENTED YET — compose it with tier-2 elements instead: one node element per state (shape 'circle', text = state name), arrow elements between them (curved: true looks good for two-way transitions), and labels attached to the arrows for transition probabilities. Node positions are computed automatically.",
+  "params_schema": { "type": "object", "properties": {} },
+  "element_ids": {},
+  "examples": []
+}

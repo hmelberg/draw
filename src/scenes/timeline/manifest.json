@@ -1,0 +1,8 @@
+{
+  "name": "timeline",
+  "status": "stub",
+  "description": "A horizontal timeline with ordered milestones. NOT IMPLEMENTED YET — compose it with tier-2/3 elements instead: a path element for the horizontal line (e.g. points [[100,375],[900,375]]), an arrow at the end if desired, point-like shape elements (small circles) at evenly spaced x positions for the milestones, and label elements attached to them, alternating side 'above'/'below' to avoid collisions.",
+  "params_schema": { "type": "object", "properties": {} },
+  "element_ids": {},
+  "examples": []
+}

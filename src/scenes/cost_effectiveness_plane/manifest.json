@@ -1,0 +1,8 @@
+{
+  "name": "cost_effectiveness_plane",
+  "status": "stub",
+  "description": "Incremental cost (y) vs incremental effect (x) plane with four quadrants and a willingness-to-pay threshold line. NOT IMPLEMENTED YET — compose it with tier-2 elements instead: an axes element (labels 'Incremental effect (QALYs)' / 'Incremental cost'), a domain centered on zero (e.g. x [-5,5], y [-50000,50000]), two path or curve elements for the zero lines through the origin, a curve with expr for the threshold line (e.g. '20000*x'), point elements for interventions, and labels attached to them. A dominant intervention sits in the south-east quadrant (more effect, less cost).",
+  "params_schema": { "type": "object", "properties": {} },
+  "element_ids": {},
+  "examples": []
+}

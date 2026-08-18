@@ -11,7 +11,6 @@ import {
   Z_AREA,
   Z_STROKE,
   Z_TEXT,
-  defaultDrawOpts,
   defaultStyle,
   type Drawable,
   type GroupDrawable,
@@ -47,6 +46,7 @@ interface Ctx {
 export function layoutElements(
   elements: SpecElement[],
   domain: { x?: [number, number]; y?: [number, number] } | undefined,
+  seedAnchors: Record<string, Pt> = {},
 ): Tier2Result {
   const plot = plotArea();
   const domainX: [number, number] = domain?.x ?? [0, 100];
@@ -59,7 +59,7 @@ export function layoutElements(
     domainDeclared: domain !== undefined,
     curveSamples: new Map(),
     nodeRadius: new Map(),
-    anchors: {},
+    anchors: { ...seedAnchors },
     warnings: [],
   };
 

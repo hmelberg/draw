@@ -99,3 +99,14 @@ export function flattenDrawables(drawables: Drawable[]): Drawable[] {
 export function leafDrawables(drawables: Drawable[]): Exclude<Drawable, GroupDrawable>[] {
   return flattenDrawables(drawables).filter((d): d is Exclude<Drawable, GroupDrawable> => d.kind !== "group");
 }
+
+/**
+ * Sub-drawable suffixes: `<elementId>_<suffix>` drawables animate together with
+ * their parent element (e.g. a point's guides, a node's text, a label's leader).
+ */
+const SUB_SUFFIXES = ["text", "guides", "leader", "head", "body", "dot"];
+
+/** All top-level drawables belonging to one command-addressable element id. */
+export function drawablesForId(drawables: Drawable[], id: string): Drawable[] {
+  return drawables.filter((d) => d.id === id || SUB_SUFFIXES.some((s) => d.id === `${id}_${s}`));
+}

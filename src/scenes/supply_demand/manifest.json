@@ -1,0 +1,124 @@
+{
+  "name": "supply_demand",
+  "status": "ready",
+  "description": "A price–quantity market diagram: downward-sloping demand, upward-sloping supply, equilibrium where they cross. Choose this scene for ANY request about markets, demand/supply, equilibrium, price ceilings or floors (shortage/surplus), taxes and deadweight loss, consumer/producer surplus, or curve shifts. All geometry is computed for you — you only choose which ingredients to include.",
+  "params_schema": {
+    "type": "object",
+    "properties": {
+      "x_label": { "type": "string", "description": "Horizontal axis label. Default \"Quantity (Q)\"." },
+      "y_label": { "type": "string", "description": "Vertical axis label. Default \"Price (P)\"." },
+      "demand": {
+        "type": "object",
+        "description": "The demand curve (always drawn).",
+        "properties": {
+          "steepness": { "type": "string", "enum": ["gentle", "medium", "steep"] },
+          "curvature": { "type": "string", "enum": ["linear", "convex", "concave"], "description": "convex = classic bowed-toward-origin demand" },
+          "label": { "type": "string", "description": "Default \"D\"." }
+        }
+      },
+      "supply": {
+        "type": ["object", "null"],
+        "description": "The supply curve. Set to null to draw demand only.",
+        "properties": {
+          "steepness": { "type": "string", "enum": ["gentle", "medium", "steep"] },
+          "curvature": { "type": "string", "enum": ["linear", "convex", "concave"] },
+          "label": { "type": "string", "description": "Default \"S\"." }
+        }
+      },
+      "equilibrium": {
+        "type": "object",
+        "description": "Equilibrium marker where D and S cross (shown by default when both curves exist).",
+        "properties": {
+          "show": { "type": "boolean" },
+          "label": { "type": "string", "description": "Default \"E\"." },
+          "guides": { "type": "boolean", "description": "Dashed guide lines to both axes (default true)." },
+          "q_label": { "type": "string", "description": "Label on the quantity axis, default \"Q*\"." },
+          "p_label": { "type": "string", "description": "Label on the price axis, default \"P*\"." }
+        }
+      },
+      "demand_shift": {
+        "type": "object",
+        "description": "A shifted demand curve D→D′ with a shift arrow.",
+        "properties": {
+          "direction": { "type": "string", "enum": ["right", "left"] },
+          "label": { "type": "string", "description": "Default \"D′\"." }
+        }
+      },
+      "supply_shift": {
+        "type": "object",
+        "description": "A shifted supply curve S→S′ with a shift arrow.",
+        "properties": {
+          "direction": { "type": "string", "enum": ["right", "left"] },
+          "label": { "type": "string", "description": "Default \"S′\"." }
+        }
+      },
+      "tax": {
+        "type": "object",
+        "description": "A per-unit tax: draws S+tax above S, the new equilibrium, and (by default) the deadweight-loss triangle. Use for any deadweight-loss-from-tax request.",
+        "properties": {
+          "show_deadweight_loss": { "type": "boolean", "description": "Default true." },
+          "label": { "type": "string", "description": "Default \"S + tax\"." }
+        }
+      },
+      "price_ceiling": {
+        "type": "object",
+        "description": "A binding price ceiling below equilibrium; by default also shows the resulting shortage (Qd > Qs).",
+        "properties": {
+          "label": { "type": "string", "description": "Default \"Price ceiling\"." },
+          "show_shortage": { "type": "boolean", "description": "Default true." }
+        }
+      },
+      "price_floor": {
+        "type": "object",
+        "description": "A binding price floor above equilibrium; by default also shows the resulting surplus.",
+        "properties": {
+          "label": { "type": "string" },
+          "show_surplus": { "type": "boolean" }
+        }
+      },
+      "regions": {
+        "type": "array",
+        "items": { "type": "string", "enum": ["consumer_surplus", "producer_surplus"] },
+        "description": "Shaded surplus regions at the market equilibrium."
+      }
+    }
+  },
+  "element_ids": {
+    "axes": "the coordinate axes with labels",
+    "demand_curve": "the demand curve",
+    "label_D": "demand curve label",
+    "supply_curve": "the supply curve (when supply is not null)",
+    "label_S": "supply curve label",
+    "equilibrium_point": "dot at the D–S crossing",
+    "guide_lines": "dashed guides from the equilibrium to both axes",
+    "label_E": "equilibrium label",
+    "label_Pstar": "price-axis label at the equilibrium",
+    "label_Qstar": "quantity-axis label at the equilibrium",
+    "demand_shift_curve / supply_shift_curve": "the shifted curve (when a shift is set)",
+    "demand_shift_arrow / supply_shift_arrow": "arrow from the old to the new curve",
+    "label_D_shift / label_S_shift": "shifted curve label",
+    "tax_supply_curve": "the S+tax curve (when tax is set)",
+    "label_S_tax": "its label",
+    "tax_equilibrium_point": "the with-tax equilibrium dot",
+    "tax_guide_lines": "dashed guides at the with-tax equilibrium",
+    "dwl_region": "shaded deadweight-loss triangle",
+    "label_DWL": "deadweight-loss label",
+    "ceiling_line / floor_line": "the dashed price-control line",
+    "label_ceiling / label_floor": "its label",
+    "shortage_guides / surplus_guides": "dashed guides at Qd and Qs",
+    "shortage_arrow / surplus_arrow": "double-headed arrow marking the gap",
+    "label_shortage / label_surplus": "gap label",
+    "cs_region / ps_region": "shaded consumer/producer surplus (when regions is set)",
+    "label_CS / label_PS": "their labels"
+  },
+  "examples": [
+    {
+      "request": "Draw a demand and supply diagram.",
+      "params": { "demand": {}, "supply": {}, "equilibrium": { "show": true, "guides": true } }
+    },
+    {
+      "request": "Show why a price ceiling creates a shortage.",
+      "params": { "demand": {}, "supply": {}, "equilibrium": { "show": true }, "price_ceiling": { "show_shortage": true } }
+    }
+  ]
+}
