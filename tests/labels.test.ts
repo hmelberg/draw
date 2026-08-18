@@ -29,6 +29,23 @@ describe("placeLabels", () => {
     expect(box.y + box.h).toBeLessThanOrEqual(750);
   });
 
+  test("long labels wrap into multiple lines and stay inside the canvas", () => {
+    const [placed] = placeLabels(
+      [req("l1", [820, 400], "right", "Deadweight loss from the per-unit tax on producers")],
+      [],
+      heuristicMeasure,
+    );
+    expect(placed.text.lines!.length).toBeGreaterThanOrEqual(2);
+    const box = bboxOfText(placed.text, heuristicMeasure);
+    expect(box.x + box.w).toBeLessThanOrEqual(1000);
+    expect(box.h).toBeGreaterThan(placed.text.fontSize * 2);
+  });
+
+  test("short labels stay single-line", () => {
+    const [placed] = placeLabels([req("l1", [500, 400], "right", "D")], [], heuristicMeasure);
+    expect(placed.text.lines).toBeUndefined();
+  });
+
   test("when all near candidates are blocked, the label is displaced with a leader line", () => {
     // Surround the anchor with obstacles so every close candidate collides.
     const obstacles = [];

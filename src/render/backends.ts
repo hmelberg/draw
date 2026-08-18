@@ -1,10 +1,11 @@
 import type { BackendModule } from "./backend";
-import { customSvgBackend } from "./svg-backend";
+import { cleanSvgBackend, customSvgBackend } from "./svg-backend";
 import { jsxgraphBackend } from "./jsxgraph-backend";
 import { mermaidBackend } from "./mermaid-backend";
 
 export const backendRegistry: Record<string, BackendModule> = {
   "custom-svg": customSvgBackend,
+  "clean-svg": cleanSvgBackend,
   jsxgraph: jsxgraphBackend,
   mermaid: mermaidBackend,
 };

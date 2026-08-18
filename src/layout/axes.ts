@@ -12,7 +12,7 @@ import {
 
 /** L-shaped axes with arrowheads and axis labels, shared by scenes and tier 2. */
 export function makeAxes(id: string, plot: PlotArea, xLabel?: string, yLabel?: string): GroupDrawable {
-  const style = defaultStyle({ strokeWidth: 3.5, roughness: 1.1 });
+  const style = defaultStyle({ strokeWidth: 4, roughness: 1.1 });
   const children: (StrokeDrawable | TextDrawable)[] = [
     {
       id: `${id}_x`,
@@ -45,7 +45,7 @@ export function makeAxes(id: string, plot: PlotArea, xLabel?: string, yLabel?: s
       kind: "text",
       pos: [(plot.x0 + plot.x1) / 2, plot.y0 - 52],
       text: xLabel,
-      fontSize: 26,
+      fontSize: 28,
       anchor: "middle",
       z: Z_TEXT,
       style: defaultStyle(),
@@ -56,9 +56,9 @@ export function makeAxes(id: string, plot: PlotArea, xLabel?: string, yLabel?: s
     children.push({
       id: `${id}_y_label`,
       kind: "text",
-      pos: [plot.x0 + 8, plot.y1 + 40],
+      pos: [plot.x0 + 8, plot.y1 + 36],
       text: yLabel,
-      fontSize: 26,
+      fontSize: 28,
       anchor: "start",
       z: Z_TEXT,
       style: defaultStyle(),

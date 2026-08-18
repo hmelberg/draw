@@ -49,7 +49,11 @@ export interface TextDrawable extends BaseDrawable {
   text: string;
   fontSize: number;
   anchor: "start" | "middle" | "end";
+  /** Set when the text is word-wrapped; pos is the center of the whole block. */
+  lines?: string[];
 }
+
+export const LINE_HEIGHT = 1.25;
 
 export interface GroupDrawable extends BaseDrawable {
   kind: "group";
@@ -77,7 +81,7 @@ export const COLORS = {
 } as const;
 
 export function defaultStyle(overrides: Partial<ResolvedStyle> = {}): ResolvedStyle {
-  return { color: INK, strokeWidth: 3, roughness: 1.4, opacity: 1, ...overrides };
+  return { color: INK, strokeWidth: 3.5, roughness: 1.4, opacity: 1, ...overrides };
 }
 
 /**

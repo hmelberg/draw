@@ -125,7 +125,7 @@ export function layoutElements(
           anchor: anchor ?? [CANVAS.w / 2, CANVAS.h / 2],
           side: el.side ?? "above-right",
           text: el.text ?? el.id,
-          fontSize: el.font_size ?? 26,
+          fontSize: el.font_size ?? 28,
           style: resolveStyle(el.style),
           drawOpts: resolveDrawOpts(el.draw, { mode: "instant" }),
         });
@@ -152,7 +152,7 @@ export function layoutElements(
           kind: "text",
           pos,
           text: el.text ?? "",
-          fontSize: el.font_size ?? 26,
+          fontSize: el.font_size ?? 28,
           anchor: "middle",
           z: Z_TEXT,
           style: resolveStyle(el.style),
@@ -199,7 +199,7 @@ function curveDrawable(el: SpecElement, ctx: Ctx): StrokeDrawable {
     kind: "stroke",
     pts,
     z: Z_STROKE,
-    style: resolveStyle(el.style, { strokeWidth: 4 }),
+    style: resolveStyle(el.style, { strokeWidth: 4.5 }),
     drawOpts: resolveDrawOpts(el.draw, { duration: SKETCH_MS.curve }),
   };
 }
@@ -241,7 +241,7 @@ function pointDrawables(el: SpecElement, ctx: Ctx, plot: ReturnType<typeof plotA
         [p[0], plot.y0],
       ],
       z: Z_STROKE,
-      style: defaultStyle({ color: COLORS.guide, strokeWidth: 2, dash: true, roughness: 0.9 }),
+      style: defaultStyle({ color: COLORS.guide, strokeWidth: 2.5, dash: true, roughness: 0.9 }),
       drawOpts: resolveDrawOpts(el.draw, { duration: SKETCH_MS.guides }),
     });
   }
@@ -294,7 +294,7 @@ function regionDrawable(el: SpecElement, ctx: Ctx): Drawable[] {
   ];
 }
 
-const NODE_FONT = 22;
+const NODE_FONT = 24;
 
 function nodeDrawables(el: SpecElement, ctx: Ctx): Drawable[] {
   const c = ctx.anchors[el.id] ?? [CANVAS.w / 2, CANVAS.h / 2];
@@ -461,7 +461,7 @@ function connectorDrawable(el: SpecElement, ctx: Ctx): Drawable[] {
       pts,
       arrowhead: el.type === "arrow" ? "end" : undefined,
       z: Z_STROKE,
-      style: resolveStyle(el.style, { strokeWidth: el.type === "arrow" ? 3 : 2.5 }),
+      style: resolveStyle(el.style, { strokeWidth: el.type === "arrow" ? 3.5 : 3 }),
       drawOpts: resolveDrawOpts(el.draw, { duration: SKETCH_MS.connector }),
     },
   ];

@@ -28,9 +28,16 @@ export function bboxOfPts(pts: Pt[]): BBox {
   return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
 }
 
-/** Text position is the horizontal anchor at the vertical center. */
+/** Text position is the horizontal anchor at the vertical center of the block. */
 export function bboxOfText(t: TextDrawable, measure: MeasureFn): BBox {
-  const { w, h } = measure(t.text, t.fontSize);
+  let w: number;
+  let h: number;
+  if (t.lines && t.lines.length > 1) {
+    w = Math.max(...t.lines.map((line) => measure(line, t.fontSize).w));
+    h = t.lines.length * t.fontSize * 1.25;
+  } else {
+    ({ w, h } = measure(t.text, t.fontSize));
+  }
   const x = t.anchor === "start" ? t.pos[0] : t.anchor === "end" ? t.pos[0] - w : t.pos[0] - w / 2;
   return { x, y: t.pos[1] - h / 2, w, h };
 }

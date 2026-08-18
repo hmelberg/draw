@@ -71,7 +71,7 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
       anchor,
       side,
       text,
-      fontSize: 26,
+      fontSize: 28,
       style: defaultStyle({ color }),
       drawOpts: defaultDrawOpts("instant"),
     });
@@ -130,7 +130,7 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
       pts: [midBase, midShifted],
       arrowhead: "end",
       z: Z_STROKE,
-      style: defaultStyle({ color: COLORS.guide, strokeWidth: 2.5 }),
+      style: defaultStyle({ color: COLORS.guide, strokeWidth: 3 }),
       drawOpts: defaultDrawOpts("sketch", SKETCH_MS.arrow),
     });
   }
@@ -138,8 +138,9 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
   // Tax: supply shifts up; new equilibrium; deadweight-loss triangle.
   if (params.tax && supplyPts && eq) {
     const taxAmount = 18;
-    const taxed = supplyPts.map(([x, y]): Pt => [x, clamp(y + taxAmount, 0, 98)]);
-    push({ ...curve("tax_supply_curve", taxed, COLORS.supply, ctx), style: defaultStyle({ color: COLORS.supply, strokeWidth: 4, dash: true }) });
+    // drop (not clamp) points shifted past the top of the plot, keeping the slope
+    const taxed = supplyPts.map(([x, y]): Pt => [x, y + taxAmount]).filter(([, y]) => y <= 98);
+    push({ ...curve("tax_supply_curve", taxed, COLORS.supply, ctx), style: defaultStyle({ color: COLORS.supply, strokeWidth: 4.5, dash: true }) });
     const taxedEndL = ctx.toLogical([taxed[taxed.length - 1]])[0];
     anchors["tax_supply_curve"] = taxedEndL;
     label("label_S_tax", taxedEndL, "above-left", params.tax.label ?? "S + tax", COLORS.supply);
@@ -217,7 +218,7 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
       kind: "stroke",
       pts,
       z: Z_STROKE,
-      style: defaultStyle({ color: COLORS.accent, strokeWidth: 3.5, dash: true }),
+      style: defaultStyle({ color: COLORS.accent, strokeWidth: 4, dash: true }),
       drawOpts: defaultDrawOpts("sketch", SKETCH_MS.priceLine),
     });
     anchors[`${kind}_line`] = pts[1];
@@ -238,7 +239,7 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
         [qb, 0],
       ])),
       z: Z_STROKE,
-      style: defaultStyle({ color: COLORS.guide, strokeWidth: 2, dash: true, roughness: 0.9 }),
+      style: defaultStyle({ color: COLORS.guide, strokeWidth: 2.5, dash: true, roughness: 0.9 }),
       drawOpts: defaultDrawOpts("sketch", SKETCH_MS.guides),
     });
     const arrowY = kind === "shortage" ? p * 0.45 : Math.min(p * 1.12, 96);
@@ -252,7 +253,7 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
       pts: arrowPts,
       arrowhead: "both",
       z: Z_STROKE,
-      style: defaultStyle({ color: COLORS.accent, strokeWidth: 3 }),
+      style: defaultStyle({ color: COLORS.accent, strokeWidth: 3.5 }),
       drawOpts: defaultDrawOpts("sketch", SKETCH_MS.arrow),
     });
     const mid: Pt = [(arrowPts[0][0] + arrowPts[1][0]) / 2, arrowPts[0][1]];
@@ -272,7 +273,7 @@ function curve(id: string, domainPts: Pt[], color: string, ctx: Ctx): StrokeDraw
     kind: "stroke",
     pts: ctx.toLogical(domainPts),
     z: Z_STROKE,
-    style: defaultStyle({ color, strokeWidth: 4 }),
+    style: defaultStyle({ color, strokeWidth: 4.5 }),
     drawOpts: defaultDrawOpts("sketch", SKETCH_MS.curve),
   };
 }
@@ -300,7 +301,7 @@ function guides(id: string, domainPt: Pt, ctx: Ctx, plot: ReturnType<typeof plot
       [p[0], plot.y0],
     ],
     z: Z_STROKE,
-    style: defaultStyle({ color: COLORS.guide, strokeWidth: 2, dash: true, roughness: 0.9 }),
+    style: defaultStyle({ color: COLORS.guide, strokeWidth: 2.5, dash: true, roughness: 0.9 }),
     drawOpts: defaultDrawOpts("sketch", SKETCH_MS.guides),
   };
 }
@@ -331,8 +332,4 @@ function betweenRegion(a: Pt[], b: Pt[], x0: number, x1: number): Pt[] | null {
   }
   if (upper.length < 2) return null;
   return [...upper, ...lower.reverse()];
-}
-
-function clamp(v: number, lo: number, hi: number): number {
-  return Math.min(Math.max(v, lo), hi);
 }

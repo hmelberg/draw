@@ -92,7 +92,7 @@ export function layoutDecisionTree(params: DecisionTreeParams): SceneLayout & { 
     order.push(id);
 
     if (node.type === "terminal") {
-      labels.push(labelReq(`label_${cleanId}`, c, "above-right", node.label, 24));
+      labels.push(labelReq(`label_${cleanId}`, c, "above-right", node.label, 26));
       order.push(`label_${cleanId}`);
       const b = n.data.branch;
       const payoff = node.payoff ?? b?.payoff;
@@ -101,11 +101,11 @@ export function layoutDecisionTree(params: DecisionTreeParams): SceneLayout & { 
         const parts: string[] = [];
         if (payoff !== undefined) parts.push(String(payoff));
         if (cost !== undefined) parts.push(`cost ${cost}`);
-        labels.push(labelReq(`payoff_${cleanId}`, [c[0] + 42, c[1]], "right", parts.join(", "), 24, COLORS.supply));
+        labels.push(labelReq(`payoff_${cleanId}`, [c[0] + 42, c[1]], "right", parts.join(", "), 26, COLORS.supply));
         order.push(`payoff_${cleanId}`);
       }
     } else {
-      labels.push(labelReq(`label_${cleanId}`, [c[0], c[1] + nodeRadius(node.type)], "above", node.label, 24));
+      labels.push(labelReq(`label_${cleanId}`, [c[0], c[1] + nodeRadius(node.type)], "above", node.label, 26));
       order.push(`label_${cleanId}`);
     }
   }
@@ -129,7 +129,7 @@ export function layoutDecisionTree(params: DecisionTreeParams): SceneLayout & { 
       kind: "stroke",
       pts: [from, to],
       z: Z_STROKE,
-      style: defaultStyle({ strokeWidth: 2.5 }),
+      style: defaultStyle({ strokeWidth: 3 }),
       drawOpts: defaultDrawOpts("sketch", SKETCH_MS.connector),
     });
     const mid: Pt = [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2];
@@ -143,7 +143,7 @@ export function layoutDecisionTree(params: DecisionTreeParams): SceneLayout & { 
     if (parts.length > 0) {
       const text = branch?.probability !== undefined && branch.label ? `${branch.label} (p=${branch.probability})` : parts.join(" ");
       const labelId = `branchlabel_${parent.data.cleanId}_${n.data.cleanId}`;
-      labels.push(labelReq(labelId, mid, "above", text, 22, COLORS.guide));
+      labels.push(labelReq(labelId, mid, "above", text, 24, COLORS.guide));
       order.push(labelId);
     }
   }
@@ -152,7 +152,7 @@ export function layoutDecisionTree(params: DecisionTreeParams): SceneLayout & { 
 }
 
 function nodeDrawable(id: string, type: TreeNode["type"], c: Pt): StrokeDrawable {
-  const style = defaultStyle({ strokeWidth: 3, color: type === "decision" ? COLORS.demand : type === "chance" ? COLORS.supply : COLORS.ink });
+  const style = defaultStyle({ strokeWidth: 3.5, color: type === "decision" ? COLORS.demand : type === "chance" ? COLORS.supply : COLORS.ink });
   const drawOpts = defaultDrawOpts("sketch", SKETCH_MS.node);
   if (type === "decision") {
     const s = 27;

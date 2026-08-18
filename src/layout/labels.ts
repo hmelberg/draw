@@ -59,6 +59,27 @@ const FALLBACK_ORDER: Side[] = [
 ];
 
 const EDGE_PAD = 4;
+/** Wrap labels wider than this many logical units into multiple lines. */
+const MAX_LABEL_WIDTH = 280;
+const LINE_HEIGHT = 1.25;
+
+function wrapLines(text: string, fontSize: number, measure: MeasureFn): string[] {
+  if (measure(text, fontSize).w <= MAX_LABEL_WIDTH) return [text];
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (current && measure(candidate, fontSize).w > MAX_LABEL_WIDTH) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
 
 function candidateBox(anchor: Pt, side: Side, r: number, w: number, h: number): BBox {
   const [dx, dy] = DIRS[side];
@@ -78,7 +99,9 @@ export function placeLabels(requests: LabelRequest[], obstacles: BBox[], measure
   const placed: PlacedLabel[] = [];
 
   for (const req of requests) {
-    const { w, h } = measure(req.text, req.fontSize);
+    const lines = wrapLines(req.text, req.fontSize, measure);
+    const w = Math.max(...lines.map((line) => measure(line, req.fontSize).w));
+    const h = lines.length * req.fontSize * LINE_HEIGHT;
     const sides: Side[] = [req.side, ...FALLBACK_ORDER.filter((s) => s !== req.side)];
     const r0 = 10 + req.fontSize * 0.55;
     const rings = [1, 2.2, 3.6, 6, 9, 13].map((k) => r0 * k);
@@ -104,6 +127,7 @@ export function placeLabels(requests: LabelRequest[], obstacles: BBox[], measure
       kind: "text",
       pos: [finalBox.x + finalBox.w / 2, finalBox.y + finalBox.h / 2],
       text: req.text,
+      lines: lines.length > 1 ? lines : undefined,
       fontSize: req.fontSize,
       anchor: "middle",
       z: Z_TEXT,
@@ -127,7 +151,7 @@ export function placeLabels(requests: LabelRequest[], obstacles: BBox[], measure
         kind: "stroke",
         pts: [req.anchor, towardAnchor],
         z: Z_STROKE,
-        style: defaultStyle({ color: COLORS.guide, strokeWidth: 1.5, dash: true, roughness: 0.8 }),
+        style: defaultStyle({ color: COLORS.guide, strokeWidth: 2, dash: true, roughness: 0.8 }),
         drawOpts: defaultDrawOpts("instant"),
       };
     }
