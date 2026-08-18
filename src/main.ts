@@ -40,7 +40,11 @@ const app = document.getElementById("app")!;
 
 // ---------- page skeleton ----------
 
-const promptEl = h("textarea", { id: "prompt", placeholder: "Describe the drawing… e.g. \"Show the deadweight loss from a tax, with shaded regions\"" });
+const promptEl = h("textarea", {
+  id: "prompt",
+  "aria-label": "Describe the drawing",
+  placeholder: "Describe the drawing… e.g. \"Show the deadweight loss from a tax, with shaded regions\"",
+});
 const generateBtn = h("button", { class: "primary" }, "Generate");
 const compareBtn = h("button", {}, "Compare configs");
 const exampleBtn = h("button", { title: "Render a bundled spec without an API key" }, "Offline example");
@@ -144,11 +148,11 @@ app.append(
 
 // ---------- settings dialog ----------
 
-const keyInput = h("input", { type: "password", placeholder: "sk-ant-…", autocomplete: "off" }) as HTMLInputElement;
+const keyInput = h("input", { id: "apikey", type: "password", placeholder: "sk-ant-…", autocomplete: "off" }) as HTMLInputElement;
 keyInput.value = getApiKey();
 const clearKeyBtn = h("button", { class: "small" }, "Clear key");
-const voiceSel = h("select", {});
-const rateSel = h("select", {});
+const voiceSel = h("select", { id: "voice" });
+const rateSel = h("select", { id: "voice-rate" });
 for (const r of ["0.8", "0.9", "1", "1.1", "1.25"]) rateSel.appendChild(h("option", { value: r }, `${r}×`));
 rateSel.value = String(settings.rate);
 
@@ -159,7 +163,7 @@ const dialog = h(
   h(
     "div",
     { class: "settings-field" },
-    h("label", {}, "Anthropic API key (bring your own)"),
+    h("label", { for: "apikey" }, "Anthropic API key (bring your own)"),
     keyInput,
     h("div", {}, clearKeyBtn),
     h(
@@ -168,8 +172,8 @@ const dialog = h(
       "Stored in this browser's localStorage only. It never leaves the browser except in requests to api.anthropic.com.",
     ),
   ),
-  h("div", { class: "settings-field" }, h("label", {}, "Narration voice"), voiceSel),
-  h("div", { class: "settings-field" }, h("label", {}, "Narration rate"), rateSel),
+  h("div", { class: "settings-field" }, h("label", { for: "voice" }, "Narration voice"), voiceSel),
+  h("div", { class: "settings-field" }, h("label", { for: "voice-rate" }, "Narration rate"), rateSel),
   h("div", {}, h("button", { class: "primary small" }, "Close")),
 );
 app.appendChild(dialog);

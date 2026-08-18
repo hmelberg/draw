@@ -179,14 +179,16 @@ function makeLeafHandle(g: SVGGElement, leaf: Exclude<Drawable, { kind: "group" 
       },
     };
   }
-  let paths: { el: SVGPathElement; len: number }[] | null = null;
+  let paths: { el: SVGPathElement; len: number; hasFill: boolean }[] | null = null;
   let total = 0;
   const ensure = () => {
     if (paths) return;
     paths = [];
     for (const p of Array.from(g.querySelectorAll("path"))) {
       const len = p.getTotalLength();
-      paths.push({ el: p, len });
+      // Solid fills are not hidden by dash-offset; fade them with progress.
+      const hasFill = (p.getAttribute("fill") ?? "none") !== "none";
+      paths.push({ el: p, len, hasFill });
       total += len;
     }
   };
@@ -194,17 +196,19 @@ function makeLeafHandle(g: SVGGElement, leaf: Exclude<Drawable, { kind: "group" 
     durationMs: leaf.drawOpts.duration,
     prepare: () => {
       ensure();
-      for (const { el, len } of paths!) {
+      for (const { el, len, hasFill } of paths!) {
         el.style.strokeDasharray = `${len}`;
         el.style.strokeDashoffset = `${len}`;
+        if (hasFill) el.style.fillOpacity = "0";
       }
     },
     setProgress: (t) => {
       ensure();
       let elapsed = t * total;
-      for (const { el, len } of paths!) {
+      for (const { el, len, hasFill } of paths!) {
         const local = Math.min(Math.max(elapsed, 0), len);
         el.style.strokeDashoffset = `${len - local}`;
+        if (hasFill) el.style.fillOpacity = String(len > 0 ? local / len : t);
         elapsed -= len;
       }
     },

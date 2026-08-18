@@ -115,7 +115,8 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
   ] as const) {
     if (!shift || !base) continue;
     const dx = (shift.direction ?? "right") === "right" ? 15 : -15;
-    const shifted = base.map(([x, y]): Pt => [clamp(x + dx, 0, 99), y]);
+    // drop (not clamp) points shifted past the plot edge, so the curve keeps its slope
+    const shifted = base.map(([x, y]): Pt => [x + dx, y]).filter(([x]) => x >= D0 - 1 && x <= D1 + 3);
     push(curve(`${kind}_shift_curve`, shifted, COLORS.shifted, ctx));
     const endL = ctx.toLogical([shifted[shifted.length - 1]])[0];
     anchors[`${kind}_shift_curve`] = endL;

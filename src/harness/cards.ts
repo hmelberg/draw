@@ -61,7 +61,7 @@ export function createCard(title: string, subtitle: string, hooks: CardHooks = {
   }
 
   const tagBoxes: HTMLInputElement[] = [];
-  const commentInput = h("input", { type: "text", placeholder: "comment (for 'other')", class: "small" });
+  const commentInput = h("input", { type: "text", "aria-label": "Failure comment", placeholder: "comment (for 'other')", class: "small" });
   const tagsWrap = h("div", { class: "tags" });
   const fireTags = () => {
     const selected = tagBoxes.filter((c) => c.checked).map((c) => c.value);
