@@ -64,7 +64,9 @@ export async function render(spec: Spec, container: HTMLElement, options: Render
   stage.className = "cs-stage";
   const caption = document.createElement("div");
   caption.className = "cs-caption cs-caption-empty";
-  figure.append(stage, caption);
+  figure.append(stage);
+  // Caption lives inside the stage as a subtitle overlay (YouTube-style).
+  stage.appendChild(caption);
   container.appendChild(figure);
 
   const measure = makeBrowserMeasure();

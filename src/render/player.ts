@@ -117,6 +117,15 @@ export class Player {
     this.renderUpTo(Math.max(this.completed - 1, 0));
   }
 
+  /**
+   * Poster/thumbnail state: show the finished figure without caption. Pressing
+   * play from here restarts from the beginning.
+   */
+  showPoster(): void {
+    this.renderUpTo(this.plan.steps.length);
+    this.setCaption("");
+  }
+
   /** Jump to a step boundary: exactly the elements drawn by steps[0..n-1] are visible. */
   renderUpTo(n: number): void {
     this.abortRun();

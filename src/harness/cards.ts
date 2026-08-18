@@ -30,6 +30,7 @@ export interface Card {
   root: HTMLElement;
   stageHost: HTMLElement;
   setStatus(text: string, kind?: "info" | "error" | "ok"): void;
+  setTitle(title: string): void;
   attachHandle(handle: RenderHandle): void;
   showRawSvg(svg: string): void;
   setSpecText(spec: unknown): void;
@@ -41,7 +42,7 @@ export interface Card {
 export function createCard(title: string, subtitle: string, hooks: CardHooks = {}): Card {
   const status = h("div", { class: "card-status" });
   const stageHost = h("div", { class: "card-stage-host" });
-  const controls = h("div", { class: "card-controls" });
+  const titleEl = h("div", { class: "card-title" }, title);
   const lintBox = h("div", {});
   const metaLine = h("div", { class: "meta-line" });
   const specArea = h("textarea", { spellcheck: "false" });
@@ -96,52 +97,79 @@ export function createCard(title: string, subtitle: string, hooks: CardHooks = {
   const root = h(
     "div",
     { class: "card" },
-    h("div", { class: "card-head" }, h("div", { class: "card-title" }, title), h("div", { class: "card-sub" }, subtitle)),
+    h("div", { class: "card-head" }, titleEl, h("div", { class: "card-sub" }, subtitle)),
     status,
     stageHost,
-    controls,
     extra,
   );
 
   let handle: RenderHandle | null = null;
 
+  /** YouTube-style overlay: poster (finished drawing), big play, seekable bar. */
   function buildControls(hd: RenderHandle): void {
-    controls.replaceChildren();
-    const playBtn = h("button", { class: "small", title: "Play / pause" }, "▶ Play");
-    const stopBtn = h("button", { class: "small", title: "Reset to start" }, "⟲");
-    const backBtn = h("button", { class: "small", title: "Step back one command" }, "|◀");
-    const fwdBtn = h("button", { class: "small", title: "Step forward one command" }, "▶|");
-    const modeSel = h("select", { title: "Playback mode" });
+    const stage = stageHost.querySelector<HTMLElement>(".cs-stage");
+    if (!stage) return;
+    stage.querySelectorAll(".cs-bigplay, .cs-controlbar").forEach((el) => el.remove());
+
+    const total = hd.plan.steps.length;
+    const bigPlay = h("button", { class: "cs-bigplay", title: "Play with narration" }, "▶");
+    const playBtn = h("button", { class: "cs-bar-btn", title: "Play / pause" }, "▶");
+    const backBtn = h("button", { class: "cs-bar-btn", title: "Step back one command" }, "⏮");
+    const fwdBtn = h("button", { class: "cs-bar-btn", title: "Step forward one command" }, "⏭");
+    const progressFill = h("div", { class: "cs-progress-fill" });
+    const progress = h("div", { class: "cs-progress", title: "Seek (per command)" }, progressFill);
+    const stepInd = h("span", { class: "step-indicator" }, `0/${total}`);
+    const modeSel = h("select", { class: "cs-bar-select", title: "Playback mode" });
     for (const m of ["narrated", "silent", "instant"]) modeSel.appendChild(h("option", { value: m }, m));
-    const speedSel = h("select", { title: "Speed multiplier" });
+    const speedSel = h("select", { class: "cs-bar-select", title: "Speed multiplier" });
     for (const s of ["0.5", "0.75", "1", "1.5", "2"]) {
       const o = h("option", { value: s }, `${s}×`);
       if (s === "1") o.setAttribute("selected", "");
       speedSel.appendChild(o);
     }
-    const stepInd = h("span", { class: "step-indicator" });
+    const bar = h("div", { class: "cs-controlbar" }, playBtn, backBtn, fwdBtn, progress, stepInd, modeSel, speedSel);
+    stage.append(bigPlay, bar);
 
-    playBtn.addEventListener("click", () => {
+    const togglePlay = () => {
       if (hd.timeline.state === "playing") hd.timeline.pause();
       else void hd.timeline.play();
+    };
+    bigPlay.addEventListener("click", (e) => {
+      e.stopPropagation();
+      togglePlay();
     });
-    stopBtn.addEventListener("click", () => hd.timeline.stop());
+    playBtn.addEventListener("click", togglePlay);
     backBtn.addEventListener("click", () => hd.timeline.stepBack());
     fwdBtn.addEventListener("click", () => hd.timeline.stepForward());
     modeSel.addEventListener("change", () => hd.timeline.setMode(modeSel.value as "narrated" | "silent" | "instant"));
     speedSel.addEventListener("change", () => hd.timeline.setSpeed(parseFloat(speedSel.value)));
+    bar.addEventListener("click", (e) => e.stopPropagation());
+    // Clicking the drawing itself toggles play/pause, like a video.
+    stage.addEventListener("click", togglePlay);
+    progress.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const rect = progress.getBoundingClientRect();
+      const frac = (e.clientX - rect.left) / rect.width;
+      hd.timeline.renderUpTo(Math.max(0, Math.min(total, Math.round(frac * total))));
+    });
 
     hd.timeline.callbacks = {
       onState: (s) => {
-        playBtn.textContent = s === "playing" ? "⏸ Pause" : s === "done" ? "▶ Replay" : "▶ Play";
+        stage.classList.toggle("is-playing", s === "playing");
+        playBtn.textContent = s === "playing" ? "⏸" : "▶";
+        bigPlay.textContent = s === "done" ? "↺" : "▶";
+        bigPlay.title = s === "done" ? "Replay with narration" : "Play with narration";
       },
-      onStep: (done, total) => {
-        stepInd.textContent = `command ${done}/${total}`;
+      onStep: (done) => {
+        stepInd.textContent = `${done}/${total}`;
+        progressFill.style.width = `${total > 0 ? (done / total) * 100 : 0}%`;
       },
     };
-    stepInd.textContent = `command 0/${hd.plan.steps.length}`;
 
-    controls.append(playBtn, backBtn, fwdBtn, stopBtn, modeSel, speedSel, h("span", { class: "spacer" }), stepInd);
+    // Thumbnail state: show the finished drawing as the poster.
+    hd.timeline.showPoster();
+    bigPlay.textContent = "▶"; // poster shows play, not replay
+    bigPlay.title = "Play with narration";
   }
 
   return {
@@ -150,6 +178,10 @@ export function createCard(title: string, subtitle: string, hooks: CardHooks = {
     setStatus: (text, kind = "info") => {
       status.textContent = text;
       status.className = `card-status ${kind === "info" ? "" : kind}`.trim();
+    },
+    setTitle: (t) => {
+      titleEl.textContent = t;
+      titleEl.setAttribute("title", title); // original prompt on hover
     },
     attachHandle: (hd) => {
       handle = hd;

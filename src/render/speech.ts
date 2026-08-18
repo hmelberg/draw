@@ -1,6 +1,42 @@
 // Web Speech wrapper. Utterance-granularity sync via onend; graceful fallback
 // to a reading-time estimate when speech is unavailable or errors. Voices load
 // asynchronously (voiceschanged).
+//
+// Browsers default to poor voices (Firefox/macOS famously lands on a metallic
+// one). Unless the user picked a voice explicitly, we score the available
+// voices and choose the best match for the utterance's language.
+
+const PREFERRED_NAMES = [
+  "Samantha", "Ava", "Allison", "Susan", "Zoe", "Evan", "Nathan", "Joelle", "Aaron",
+  "Karen", "Daniel", "Serena", "Moira", "Tessa", "Fiona", "Kate", "Oliver",
+  "Nora", "Henrik", // Norwegian system voices
+];
+
+// Novelty and legacy voices that sound robotic — never auto-pick these.
+const AVOID_NAMES =
+  /fred|albert|zarvox|trinoids|whisper|wobble|deranged|hysterical|bad news|bells|boing|bubbles|cellos|jester|organ|superstar|good news|bahh|junior|ralph|kathy|eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|compact|espeak|eloquence/i;
+
+function scoreVoice(v: SpeechSynthesisVoice, lang: "en" | "nb"): number {
+  const vLang = v.lang.toLowerCase();
+  const langFamily = lang === "nb" ? ["nb", "no", "nn"] : ["en"];
+  if (!langFamily.some((l) => vLang.startsWith(l))) return -1;
+  let s = 10;
+  if (AVOID_NAMES.test(v.name)) return 0; // last resort only
+  if (/enhanced|premium|natural|neural|siri/i.test(v.name)) s += 40;
+  if (PREFERRED_NAMES.some((n) => v.name.startsWith(n))) s += 25;
+  if (/google|microsoft/i.test(v.name)) s += 15;
+  if (lang === "en" && vLang.startsWith("en-us")) s += 4;
+  if (lang === "nb" && (vLang.startsWith("nb") || vLang.startsWith("no"))) s += 4;
+  return s;
+}
+
+/** Cheap utterance-language sniff: Norwegian characters or function words. */
+export function detectLang(text: string): "en" | "nb" {
+  if (/[æøå]/i.test(text)) return "nb";
+  const norwegianWords = /\b(og|er|ikke|det|som|en|et|på|til|av|vi|når|hvor|med|for at)\b/i;
+  const hits = (text.toLowerCase().match(norwegianWords) ?? []).length;
+  return hits >= 1 && !/\b(the|and|is|of|with|as)\b/i.test(text) ? "nb" : "en";
+}
 
 export class SpeechManager {
   private synth: SpeechSynthesis | null;
@@ -29,6 +65,20 @@ export class SpeechManager {
 
   setVoice(uri: string | null): void {
     this.voiceURI = uri;
+  }
+
+  /** Highest-scoring voice for a language; null lets the browser default. */
+  bestVoice(lang: "en" | "nb"): SpeechSynthesisVoice | null {
+    let best: SpeechSynthesisVoice | null = null;
+    let bestScore = 0;
+    for (const v of this.voices()) {
+      const s = scoreVoice(v, lang);
+      if (s > bestScore) {
+        best = v;
+        bestScore = s;
+      }
+    }
+    return best;
   }
 
   setRate(rate: number): void {
@@ -71,8 +121,11 @@ export class SpeechManager {
       signal?.addEventListener("abort", onAbort);
 
       const utterance = new SpeechSynthesisUtterance(text);
-      const voice = this.voices().find((v) => v.voiceURI === this.voiceURI);
+      const lang = detectLang(text);
+      const explicit = this.voices().find((v) => v.voiceURI === this.voiceURI);
+      const voice = explicit ?? this.bestVoice(lang);
       if (voice) utterance.voice = voice;
+      utterance.lang = voice?.lang ?? (lang === "nb" ? "nb-NO" : "en-US");
       utterance.rate = Math.min(4, Math.max(0.25, this.rate * speedMultiplier));
       utterance.onend = done;
       utterance.onerror = () => {

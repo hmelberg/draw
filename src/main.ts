@@ -389,6 +389,7 @@ async function fillSpecCard(ctx: SpecCardCtx, prompt: string, outcome: Generatio
   }
 
   (ctx as SpecCardCtx & { setLastSpec?: (s: Spec) => void }).setLastSpec?.(outcome.spec);
+  if (outcome.spec.title) card.setTitle(outcome.spec.title);
   card.setSpecText(outcome.spec);
   card.setStatus(outcome.error ? `Partial: ${outcome.error}` : "Rendering…", outcome.error ? "error" : "info");
 
@@ -411,7 +412,7 @@ async function fillSpecCard(ctx: SpecCardCtx, prompt: string, outcome: Generatio
       .filter(Boolean)
       .join(" · ");
     card.setMetaLine(meta);
-    card.setStatus(handle.backendApplies ? "Ready — press play." : "Backend does not support this family.", handle.backendApplies ? "ok" : "error");
+    card.setStatus(handle.backendApplies ? "Ready." : "Backend does not support this family.", handle.backendApplies ? "ok" : "error");
   } catch (err) {
     card.setStatus(`Render failed: ${(err as Error).message}`, "error");
     entry.error = `render: ${(err as Error).message}`;
@@ -467,13 +468,14 @@ async function offlineExample(): Promise<void> {
   const ex = examples[exampleIdx % examples.length];
   exampleIdx++;
   const ctx = newSpecCard(ex.request, settings.backend === RAW_BASELINE_NAME ? "custom-svg" : settings.backend, "bundled");
+  if (ex.spec.title) ctx.card.setTitle(ex.spec.title);
   ctx.card.setSpecText(ex.spec);
   const handle = await render(ex.spec, ctx.card.stageHost, { backend: ctx.backendName, speech, mode: settings.mode, speed: settings.speed });
   ctx.current.handle = handle;
   ctx.card.attachHandle(handle);
   ctx.card.setLint(handle.layout.issues, handle.layout.warnings);
   ctx.card.setMetaLine("bundled example spec — no API call");
-  ctx.card.setStatus("Ready — press play (narration needs a user gesture anyway).", "ok");
+  ctx.card.setStatus("Ready.", "ok");
 }
 
 async function runBenchmark(): Promise<void> {
