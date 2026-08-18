@@ -33,3 +33,10 @@ Milestones from [BRIEF.md](BRIEF.md). Status as of 2026-08-18 (initial build ses
    shows demand.
 8. **Excalidraw export** — not built (explicitly low priority in the brief).
 9. **Mermaid** — narrow by design: decision_tree family only, instant render, no animation.
+10. **Structured outputs vs. open `params`** (found in the first live run, 2026-08-18): the
+    Messages API structured-output grammar rejects `additionalProperties: true`, which the
+    spec's `params` object needs (scene params vary per scene). The client detects the 400
+    once per session and uses plain-JSON mode (schema in prompt + ajv + repair round) —
+    which produced a valid, lint-clean spec on round 1 in the live test. To reclaim
+    constrained decoding: generate a closed `params` schema as the union of ready-scene
+    manifests (needs recursion support for decision_tree's `node`).

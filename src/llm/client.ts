@@ -70,6 +70,12 @@ async function createMessage(
   return client.messages.create(base);
 }
 
+// Learned per session: the structured-output grammar rejects our spec schema
+// (open `params` object → "additionalProperties: true is not supported"), and
+// the fallbacks beta may be unavailable on some keys. Remember what 400'd so
+// later calls (and repair rounds) skip the doomed attempts.
+const featureBroken = { structuredOutput: false, fallbacks: false };
+
 /** One JSON-producing call: structured output first, plain-JSON fallback on 400. */
 export async function callForJson(
   client: Anthropic,
@@ -81,22 +87,29 @@ export async function callForJson(
   const t0 = performance.now();
   let response: Anthropic.Message | null = null;
   let structured = true;
-
-  const attempts: { schema: object | null; fallbacks: boolean }[] = [
-    { schema: outputSchema, fallbacks: true },
-    { schema: outputSchema, fallbacks: false },
-    { schema: null, fallbacks: false },
-  ];
   let lastError: unknown = null;
-  for (const attempt of attempts) {
+
+  for (let attempt = 0; attempt < 3 && !response; attempt++) {
+    const useSchema = featureBroken.structuredOutput ? null : outputSchema;
+    const useFallbacks = !featureBroken.fallbacks;
     try {
-      response = await createMessage(client, model, system, messages, attempt.schema, attempt.fallbacks);
-      structured = attempt.schema !== null;
-      break;
+      response = await createMessage(client, model, system, messages, useSchema, useFallbacks);
+      structured = useSchema !== null;
     } catch (err) {
       lastError = err;
-      if (err instanceof Anthropic.BadRequestError) continue; // degrade and retry
-      throw err;
+      if (!(err instanceof Anthropic.BadRequestError)) throw err;
+      const msg = err.message;
+      if (useSchema && /output_config|format\.schema|json_schema/i.test(msg)) {
+        featureBroken.structuredOutput = true;
+      } else if (useFallbacks && /fallback|beta/i.test(msg)) {
+        featureBroken.fallbacks = true;
+      } else if (useSchema) {
+        featureBroken.structuredOutput = true; // unknown 400: most likely the schema
+      } else if (useFallbacks) {
+        featureBroken.fallbacks = true;
+      } else {
+        throw err; // plain request still 400s — a real request error
+      }
     }
   }
   if (!response) throw lastError;
