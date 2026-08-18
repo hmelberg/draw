@@ -11,6 +11,7 @@ import {
   Z_AREA,
   Z_STROKE,
   Z_TEXT,
+  SKETCH_MS,
   defaultStyle,
   type Drawable,
   type GroupDrawable,
@@ -199,7 +200,7 @@ function curveDrawable(el: SpecElement, ctx: Ctx): StrokeDrawable {
     pts,
     z: Z_STROKE,
     style: resolveStyle(el.style, { strokeWidth: 4 }),
-    drawOpts: resolveDrawOpts(el.draw, { duration: 1600 }),
+    drawOpts: resolveDrawOpts(el.draw, { duration: SKETCH_MS.curve }),
   };
 }
 
@@ -241,7 +242,7 @@ function pointDrawables(el: SpecElement, ctx: Ctx, plot: ReturnType<typeof plotA
       ],
       z: Z_STROKE,
       style: defaultStyle({ color: COLORS.guide, strokeWidth: 2, dash: true, roughness: 0.9 }),
-      drawOpts: resolveDrawOpts(el.draw, { duration: 700 }),
+      drawOpts: resolveDrawOpts(el.draw, { duration: SKETCH_MS.guides }),
     });
   }
   out.push({
@@ -251,7 +252,7 @@ function pointDrawables(el: SpecElement, ctx: Ctx, plot: ReturnType<typeof plotA
     shapeHint: { type: "circle", c: p, r: 7 },
     z: Z_STROKE,
     style: resolveStyle(el.style, { strokeWidth: 3, fill: resolveStyle(el.style).color }),
-    drawOpts: resolveDrawOpts(el.draw, { duration: 350 }),
+    drawOpts: resolveDrawOpts(el.draw, { duration: SKETCH_MS.dot }),
   });
   return out;
 }
@@ -288,7 +289,7 @@ function regionDrawable(el: SpecElement, ctx: Ctx): Drawable[] {
       pts,
       z: Z_AREA,
       style,
-      drawOpts: resolveDrawOpts(el.draw, { duration: 900 }),
+      drawOpts: resolveDrawOpts(el.draw, { duration: SKETCH_MS.region }),
     },
   ];
 }
@@ -300,7 +301,7 @@ function nodeDrawables(el: SpecElement, ctx: Ctx): Drawable[] {
   const shape = el.shape ?? "circle";
   const text = el.text;
   const style = resolveStyle(el.style, { strokeWidth: 3 });
-  const drawOpts = resolveDrawOpts(el.draw, { duration: 700 });
+  const drawOpts = resolveDrawOpts(el.draw, { duration: SKETCH_MS.node });
   const out: Drawable[] = [];
   const textW = text ? heuristicMeasure(text, NODE_FONT).w : 0;
 
@@ -399,7 +400,7 @@ function nodeText(id: string, pos: Pt, text: string, drawOpts: ReturnType<typeof
     anchor: "middle",
     z: Z_TEXT,
     style: defaultStyle(),
-    drawOpts: { mode: drawOpts.mode, duration: Math.min(400, drawOpts.duration) },
+    drawOpts: { mode: drawOpts.mode, duration: Math.min(SKETCH_MS.text, drawOpts.duration) },
   };
 }
 
@@ -461,14 +462,14 @@ function connectorDrawable(el: SpecElement, ctx: Ctx): Drawable[] {
       arrowhead: el.type === "arrow" ? "end" : undefined,
       z: Z_STROKE,
       style: resolveStyle(el.style, { strokeWidth: el.type === "arrow" ? 3 : 2.5 }),
-      drawOpts: resolveDrawOpts(el.draw, { duration: 600 }),
+      drawOpts: resolveDrawOpts(el.draw, { duration: SKETCH_MS.connector }),
     },
   ];
 }
 
 function shapeDrawable(el: SpecElement, ctx: Ctx): StrokeDrawable {
   const style = resolveStyle(el.style);
-  const drawOpts = resolveDrawOpts(el.draw, { duration: 700 });
+  const drawOpts = resolveDrawOpts(el.draw, { duration: SKETCH_MS.node });
   const shape = el.shape ?? "rect";
   if (shape === "circle" || shape === "chance") {
     const c: Pt = [el.x ?? CANVAS.w / 2, el.y ?? CANVAS.h / 2];

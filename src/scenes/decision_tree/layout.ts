@@ -7,6 +7,7 @@ import { CANVAS } from "../../layout/canvas";
 import {
   COLORS,
   Z_STROKE,
+  SKETCH_MS,
   defaultDrawOpts,
   defaultStyle,
   type Drawable,
@@ -129,7 +130,7 @@ export function layoutDecisionTree(params: DecisionTreeParams): SceneLayout & { 
       pts: [from, to],
       z: Z_STROKE,
       style: defaultStyle({ strokeWidth: 2.5 }),
-      drawOpts: defaultDrawOpts("sketch", 600),
+      drawOpts: defaultDrawOpts("sketch", SKETCH_MS.connector),
     });
     const mid: Pt = [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2];
     anchors[id] = mid;
@@ -152,7 +153,7 @@ export function layoutDecisionTree(params: DecisionTreeParams): SceneLayout & { 
 
 function nodeDrawable(id: string, type: TreeNode["type"], c: Pt): StrokeDrawable {
   const style = defaultStyle({ strokeWidth: 3, color: type === "decision" ? COLORS.demand : type === "chance" ? COLORS.supply : COLORS.ink });
-  const drawOpts = defaultDrawOpts("sketch", 550);
+  const drawOpts = defaultDrawOpts("sketch", SKETCH_MS.node);
   if (type === "decision") {
     const s = 27;
     return {

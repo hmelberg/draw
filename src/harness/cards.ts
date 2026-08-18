@@ -109,7 +109,7 @@ export function createCard(title: string, subtitle: string, hooks: CardHooks = {
   function buildControls(hd: RenderHandle): void {
     const stage = stageHost.querySelector<HTMLElement>(".cs-stage");
     if (!stage) return;
-    stage.querySelectorAll(".cs-bigplay, .cs-controlbar").forEach((el) => el.remove());
+    stageHost.querySelectorAll(".cs-bigplay, .cs-controlbar").forEach((el) => el.remove());
 
     const total = hd.plan.steps.length;
     const bigPlay = h("button", { class: "cs-bigplay", title: "Play with narration" }, "▶");
@@ -128,7 +128,9 @@ export function createCard(title: string, subtitle: string, hooks: CardHooks = {
       speedSel.appendChild(o);
     }
     const bar = h("div", { class: "cs-controlbar" }, playBtn, backBtn, fwdBtn, progress, stepInd, modeSel, speedSel);
-    stage.append(bigPlay, bar);
+    stage.appendChild(bigPlay);
+    // The bar lives below the drawing so it never covers axis labels.
+    stage.insertAdjacentElement("afterend", bar);
 
     const togglePlay = () => {
       if (hd.timeline.state === "playing") hd.timeline.pause();
@@ -156,6 +158,7 @@ export function createCard(title: string, subtitle: string, hooks: CardHooks = {
     hd.timeline.callbacks = {
       onState: (s) => {
         stage.classList.toggle("is-playing", s === "playing");
+        stage.classList.toggle("is-paused", s === "paused");
         playBtn.textContent = s === "playing" ? "⏸" : "▶";
         bigPlay.textContent = s === "done" ? "↺" : "▶";
         bigPlay.title = s === "done" ? "Replay with narration" : "Play with narration";

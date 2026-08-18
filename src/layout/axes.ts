@@ -2,6 +2,7 @@ import { type PlotArea } from "./canvas";
 import {
   Z_STROKE,
   Z_TEXT,
+  SKETCH_MS,
   defaultDrawOpts,
   defaultStyle,
   type GroupDrawable,
@@ -23,7 +24,7 @@ export function makeAxes(id: string, plot: PlotArea, xLabel?: string, yLabel?: s
       arrowhead: "end",
       z: Z_STROKE,
       style,
-      drawOpts: defaultDrawOpts("sketch", 700),
+      drawOpts: defaultDrawOpts("sketch", SKETCH_MS.axis),
     },
     {
       id: `${id}_y`,
@@ -35,7 +36,7 @@ export function makeAxes(id: string, plot: PlotArea, xLabel?: string, yLabel?: s
       arrowhead: "end",
       z: Z_STROKE,
       style,
-      drawOpts: defaultDrawOpts("sketch", 700),
+      drawOpts: defaultDrawOpts("sketch", SKETCH_MS.axis),
     },
   ];
   if (xLabel) {

@@ -10,6 +10,7 @@ import {
   COLORS,
   Z_AREA,
   Z_STROKE,
+  SKETCH_MS,
   defaultDrawOpts,
   defaultStyle,
   type Drawable,
@@ -130,7 +131,7 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
       arrowhead: "end",
       z: Z_STROKE,
       style: defaultStyle({ color: COLORS.guide, strokeWidth: 2.5 }),
-      drawOpts: defaultDrawOpts("sketch", 500),
+      drawOpts: defaultDrawOpts("sketch", SKETCH_MS.arrow),
     });
   }
 
@@ -158,7 +159,7 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
             pts,
             z: Z_AREA,
             style: defaultStyle({ color: COLORS.regionLoss, fill: COLORS.regionLoss, opacity: 0.5, strokeWidth: 1 }),
-            drawOpts: defaultDrawOpts("sketch", 900),
+            drawOpts: defaultDrawOpts("sketch", SKETCH_MS.region),
           });
           anchors["dwl_region"] = centroid(pts);
           label("label_DWL", anchors["dwl_region"], "right", "Deadweight loss", COLORS.regionLoss);
@@ -217,7 +218,7 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
       pts,
       z: Z_STROKE,
       style: defaultStyle({ color: COLORS.accent, strokeWidth: 3.5, dash: true }),
-      drawOpts: defaultDrawOpts("sketch", 900),
+      drawOpts: defaultDrawOpts("sketch", SKETCH_MS.priceLine),
     });
     anchors[`${kind}_line`] = pts[1];
     label(`label_${kind}`, pts[1], "above-left", text, COLORS.accent);
@@ -238,7 +239,7 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
       ])),
       z: Z_STROKE,
       style: defaultStyle({ color: COLORS.guide, strokeWidth: 2, dash: true, roughness: 0.9 }),
-      drawOpts: defaultDrawOpts("sketch", 500),
+      drawOpts: defaultDrawOpts("sketch", SKETCH_MS.guides),
     });
     const arrowY = kind === "shortage" ? p * 0.45 : Math.min(p * 1.12, 96);
     const arrowPts = ctx.toLogical([
@@ -252,7 +253,7 @@ export function layoutSupplyDemand(params: SupplyDemandParams): SceneLayout {
       arrowhead: "both",
       z: Z_STROKE,
       style: defaultStyle({ color: COLORS.accent, strokeWidth: 3 }),
-      drawOpts: defaultDrawOpts("sketch", 600),
+      drawOpts: defaultDrawOpts("sketch", SKETCH_MS.arrow),
     });
     const mid: Pt = [(arrowPts[0][0] + arrowPts[1][0]) / 2, arrowPts[0][1]];
     anchors[`${kind}_arrow`] = mid;
@@ -272,7 +273,7 @@ function curve(id: string, domainPts: Pt[], color: string, ctx: Ctx): StrokeDraw
     pts: ctx.toLogical(domainPts),
     z: Z_STROKE,
     style: defaultStyle({ color, strokeWidth: 4 }),
-    drawOpts: defaultDrawOpts("sketch", 1600),
+    drawOpts: defaultDrawOpts("sketch", SKETCH_MS.curve),
   };
 }
 
@@ -284,7 +285,7 @@ function dot(id: string, c: Pt): StrokeDrawable {
     shapeHint: { type: "circle", c, r: 7 },
     z: Z_STROKE,
     style: defaultStyle({ strokeWidth: 3, fill: COLORS.ink }),
-    drawOpts: defaultDrawOpts("sketch", 350),
+    drawOpts: defaultDrawOpts("sketch", SKETCH_MS.dot),
   };
 }
 
@@ -300,7 +301,7 @@ function guides(id: string, domainPt: Pt, ctx: Ctx, plot: ReturnType<typeof plot
     ],
     z: Z_STROKE,
     style: defaultStyle({ color: COLORS.guide, strokeWidth: 2, dash: true, roughness: 0.9 }),
-    drawOpts: defaultDrawOpts("sketch", 700),
+    drawOpts: defaultDrawOpts("sketch", SKETCH_MS.guides),
   };
 }
 
@@ -311,7 +312,7 @@ function area(id: string, pts: Pt[], color: string): Drawable {
     pts,
     z: Z_AREA,
     style: defaultStyle({ color, fill: color, opacity: 0.5, strokeWidth: 1 }),
-    drawOpts: defaultDrawOpts("sketch", 900),
+    drawOpts: defaultDrawOpts("sketch", SKETCH_MS.region),
   };
 }
 

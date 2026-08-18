@@ -80,8 +80,27 @@ export function defaultStyle(overrides: Partial<ResolvedStyle> = {}): ResolvedSt
   return { color: INK, strokeWidth: 3, roughness: 1.4, opacity: 1, ...overrides };
 }
 
+/**
+ * Default sketch durations (ms) per element role, at speed 1×. Tuned slow
+ * enough that each element visibly "draws itself"; the speed control scales
+ * everything from here.
+ */
+export const SKETCH_MS = {
+  stroke: 1800,
+  curve: 2800,
+  axis: 1300,
+  guides: 1200,
+  dot: 550,
+  region: 1700,
+  connector: 1100,
+  node: 1100,
+  priceLine: 1500,
+  arrow: 950,
+  text: 500,
+} as const;
+
 export function defaultDrawOpts(mode: "sketch" | "instant" = "sketch", durationMs?: number): DrawResolved {
-  return { mode, duration: mode === "instant" ? 0 : (durationMs ?? 1100) };
+  return { mode, duration: mode === "instant" ? 0 : (durationMs ?? SKETCH_MS.stroke) };
 }
 
 /** Pre-order flatten: groups are included, followed by their children. */
