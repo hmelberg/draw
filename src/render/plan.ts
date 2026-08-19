@@ -204,8 +204,8 @@ export function planCommands(commands: Command[] | undefined, allIds: string[], 
         if (zoom <= 1) {
           box = null;
         } else {
-          let cx = camera ? camera.x + camera.w / 2 : CANVAS.w / 2;
-          let cy = camera ? camera.y + camera.h / 2 : CANVAS.h / 2;
+          let cx: number = camera ? camera.x + camera.w / 2 : CANVAS.w / 2;
+          let cy: number = camera ? camera.y + camera.h / 2 : CANVAS.h / 2;
           const center = cmd.camera.center;
           if (center?.ref !== undefined) {
             if (!known.has(center.ref)) {
