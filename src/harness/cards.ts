@@ -112,8 +112,65 @@ export function createCard(title: string, subtitle: string, hooks: CardHooks = {
 
   let handle: RenderHandle | null = null;
 
-  /** YouTube-style overlay: poster (finished drawing), big play, seekable bar. */
-  function buildControls(hd: RenderHandle): void {
+  return {
+    root,
+    stageHost,
+    setStatus: (text, kind = "info") => {
+      status.textContent = text;
+      status.className = `card-status ${kind === "info" ? "" : kind}`.trim();
+    },
+    setTitle: (t) => {
+      titleEl.textContent = t;
+      titleEl.setAttribute("title", title); // original prompt on hover
+    },
+    attachHandle: (hd) => {
+      handle = hd;
+      attachPlayerControls(stageHost, hd, prefs, (playing) => root.classList.toggle("is-playing", playing));
+    },
+    showRawSvg: (svg) => {
+      const wrap = h("div", { class: "cs-baseline" });
+      wrap.innerHTML = svg;
+      stageHost.replaceChildren(
+        wrap,
+        h("div", { class: "cs-baseline-note" }, "Raw-SVG baseline: unaided LLM output — no spec, no layout engine, no lint."),
+      );
+    },
+    setSpecText: (spec) => {
+      specArea.value = JSON.stringify(spec, null, 2);
+    },
+    setLint: (issues, warnings) => {
+      lintBox.replaceChildren();
+      if (issues.length === 0 && warnings.length === 0) {
+        lintBox.appendChild(h("div", { class: "lint-clean" }, "Lint clean ✓"));
+        return;
+      }
+      const ul = h("ul", { class: "lint-list" });
+      for (const i of issues) ul.appendChild(h("li", { class: i.severity }, `${i.rule}: ${i.message}`));
+      for (const w of warnings) ul.appendChild(h("li", {}, `layout: ${w}`));
+      lintBox.appendChild(ul);
+    },
+    setMetaLine: (text) => {
+      metaLine.textContent = text;
+    },
+    destroy: () => {
+      handle?.destroy();
+      root.remove();
+    },
+  };
+}
+
+/**
+ * YouTube-style player controls: poster (finished drawing), big play button,
+ * seekable per-command progress bar, mode/speed selects. Shared between the
+ * harness cards and the standalone #gdoc viewer.
+ */
+export function attachPlayerControls(
+  stageHost: HTMLElement,
+  hd: RenderHandle,
+  prefs: PlaybackPrefs,
+  onPlayingChange?: (playing: boolean) => void,
+): void {
+  {
     const stage = stageHost.querySelector<HTMLElement>(".cs-stage");
     if (!stage) return;
     stageHost.querySelectorAll(".cs-bigplay, .cs-controlbar").forEach((el) => el.remove());
@@ -173,8 +230,8 @@ export function createCard(title: string, subtitle: string, hooks: CardHooks = {
       onState: (s) => {
         stage.classList.toggle("is-playing", s === "playing");
         stage.classList.toggle("is-paused", s === "paused");
-        // Focus mode: fade the controls and the rating/spec section while playing.
-        root.classList.toggle("is-playing", s === "playing");
+        // Focus mode: let the host fade its chrome while playing.
+        onPlayingChange?.(s === "playing");
         playBtn.textContent = s === "playing" ? "⏸" : "▶";
         bigPlay.textContent = s === "done" ? "↺" : "▶";
         bigPlay.title = s === "done" ? "Replay with narration" : "Play with narration";
@@ -190,50 +247,4 @@ export function createCard(title: string, subtitle: string, hooks: CardHooks = {
     bigPlay.textContent = "▶"; // poster shows play, not replay
     bigPlay.title = "Play with narration";
   }
-
-  return {
-    root,
-    stageHost,
-    setStatus: (text, kind = "info") => {
-      status.textContent = text;
-      status.className = `card-status ${kind === "info" ? "" : kind}`.trim();
-    },
-    setTitle: (t) => {
-      titleEl.textContent = t;
-      titleEl.setAttribute("title", title); // original prompt on hover
-    },
-    attachHandle: (hd) => {
-      handle = hd;
-      buildControls(hd);
-    },
-    showRawSvg: (svg) => {
-      const wrap = h("div", { class: "cs-baseline" });
-      wrap.innerHTML = svg;
-      stageHost.replaceChildren(
-        wrap,
-        h("div", { class: "cs-baseline-note" }, "Raw-SVG baseline: unaided LLM output — no spec, no layout engine, no lint."),
-      );
-    },
-    setSpecText: (spec) => {
-      specArea.value = JSON.stringify(spec, null, 2);
-    },
-    setLint: (issues, warnings) => {
-      lintBox.replaceChildren();
-      if (issues.length === 0 && warnings.length === 0) {
-        lintBox.appendChild(h("div", { class: "lint-clean" }, "Lint clean ✓"));
-        return;
-      }
-      const ul = h("ul", { class: "lint-list" });
-      for (const i of issues) ul.appendChild(h("li", { class: i.severity }, `${i.rule}: ${i.message}`));
-      for (const w of warnings) ul.appendChild(h("li", {}, `layout: ${w}`));
-      lintBox.appendChild(ul);
-    },
-    setMetaLine: (text) => {
-      metaLine.textContent = text;
-    },
-    destroy: () => {
-      handle?.destroy();
-      root.remove();
-    },
-  };
 }

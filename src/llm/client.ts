@@ -4,6 +4,7 @@
 // header are Anthropic's supported CORS mechanism for exactly this pattern.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { extractJson } from "../spec/extract";
 
 export const MODELS = [
   { id: "claude-opus-5", label: "Claude Opus 5 (default)" },
@@ -161,33 +162,7 @@ export async function callForText(
   return { text, ms: performance.now() - t0 };
 }
 
-export function extractJson(text: string): unknown {
-  const fenced = /```(?:json)?\s*([\s\S]*?)```/.exec(text);
-  const candidate = fenced ? fenced[1] : text;
-  const start = candidate.indexOf("{");
-  if (start === -1) throw new Error("no JSON object found in the response");
-  // scan for the matching closing brace
-  let depth = 0;
-  let inString = false;
-  let escape = false;
-  for (let i = start; i < candidate.length; i++) {
-    const c = candidate[i];
-    if (escape) {
-      escape = false;
-    } else if (c === "\\") {
-      escape = true;
-    } else if (c === '"') {
-      inString = !inString;
-    } else if (!inString) {
-      if (c === "{") depth++;
-      else if (c === "}") {
-        depth--;
-        if (depth === 0) return JSON.parse(candidate.slice(start, i + 1));
-      }
-    }
-  }
-  throw new Error("unbalanced JSON in the response");
-}
+export { extractJson };
 
 /** Human-readable message for the UI. */
 export function describeApiError(err: unknown): string {

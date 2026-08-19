@@ -395,6 +395,34 @@ dialog h3 { font-family: var(--sketch-font); font-weight: 400; margin: 0 0 0.8re
 
 .hint { color: var(--muted); font-size: 0.85rem; }
 
+/* Standalone #gdoc viewer */
+.viewer-body { display: flex; justify-content: center; }
+.viewer-wrap {
+  width: min(960px, 96vw);
+  padding: 1.6rem 0 2.5rem;
+  display: flex;
+  flex-direction: column;
+}
+.viewer-title {
+  font-family: var(--sketch-font);
+  font-weight: 400;
+  font-size: 2rem;
+  margin: 0 0 0.9rem;
+  align-self: flex-start;
+}
+.viewer-status { color: var(--muted); margin-bottom: 0.8rem; }
+.viewer-status.error { color: var(--loss); font-weight: 600; }
+.viewer-figure {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(61, 56, 51, 0.09);
+  padding: 0.5rem 0.6rem 0.3rem;
+}
+.viewer-footer { margin-top: 0.9rem; text-align: center; font-size: 0.85rem; }
+.viewer-footer a { color: var(--muted); text-decoration: none; }
+.viewer-footer a:hover { color: var(--rust); }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
