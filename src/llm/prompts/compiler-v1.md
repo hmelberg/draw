@@ -18,12 +18,21 @@ Declare a `domain` when your curves live in meaningful units (e.g. `{"x": [0, 10
 
 `commands` is the storyboard: the figure is drawn gradually while narration is spoken. Alternate `speak` and `draw` so each spoken idea is immediately illustrated. Rules:
 
-- Each command sets exactly one of `speak` / `draw` / `pause`.
-- `speak`: one short, clear teaching sentence (it is read aloud — write for the ear).
+- Each command sets exactly one verb. The core three: `speak` / `draw` / `pause`.
+- `speak`: one short, clear teaching sentence (it is read aloud — write for the ear). Add `"blocking": false` to keep talking while the NEXT commands run (perfect over a `point` or `highlight`).
 - `draw`: a list of element ids, drawn one after another; add `"parallel": true` to draw them simultaneously.
 - `pause`: seconds of silence, for pacing.
 - Elements you never mention are drawn automatically at the end — but a good storyboard mentions everything in a deliberate order (axes first, then curves, then derived things like intersections and shaded regions).
 - 4–8 speak lines is the sweet spot for one figure.
+
+Gesture verbs, for teaching moves after elements are on screen (all id lists accept one or many ids):
+
+- `highlight`: `{"highlight": {"target": ["demand_curve"], "effect": "pulse"}}` — temporary emphasis (`pulse`, `circle`, or `glow`), then back to normal.
+- `point`: `{"point": {"at": {"ref": "eq_point"}, "gesture": "circle"}}` — a laser pointer travels to the target, gestures (`tap` / `circle` / `underline`), and disappears.
+- `move`: `{"move": {"target": ["note_arrow"], "by": [15, 0], "duration": 1}}` — translate elements by a delta (domain units when a domain is declared), optionally with `easing` or a waypoint `path`. IMPORTANT: `move` translates ONLY the listed elements — attached labels, intersection points, guide lines, and regions do NOT follow. To shift a curve semantically (e.g. demand shifting right with a new equilibrium), declare the shifted curve as a second element (D′) and draw it — do not move the original.
+- `show` / `hide`: make elements (in)visible instantly; hidden elements can return. `erase`: remove elements with a reverse hand-drawn animation (they stay hidden).
+- `clear`: `{"clear": {"keep": ["axes"]}}` — wipe everything visible except `keep`.
+- `camera`: `{"camera": {"center": {"ref": "dwl_region"}, "zoom": 2}}` — zoom into a detail; `{"camera": {"reset": true}}` returns to the full view.
 
 ## Output
 

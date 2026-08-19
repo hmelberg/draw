@@ -16,7 +16,9 @@ import {
 } from "../layout/model";
 import { heuristicMeasure, type MeasureFn } from "../layout/measure";
 import type { LayoutResult } from "../layout/layout";
-import type { BackendModule, MountResult, RenderedElement } from "./backend";
+import type { BBox } from "../layout/geometry";
+import type { HighlightEffect } from "../spec/types";
+import type { BackendEffects, BackendModule, MountResult, RenderedElement } from "./backend";
 
 export const SKETCH_FONT = "'Patrick Hand', 'Segoe Print', 'Comic Sans MS', cursive";
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -303,10 +305,12 @@ class SvgElementHandle implements RenderedElement {
   readonly durationMs: number;
   private leaves: LeafHandle[];
   private cumulative: number[];
+  private groups: SVGGElement[];
 
-  constructor(id: string, leaves: LeafHandle[]) {
+  constructor(id: string, leaves: LeafHandle[], groups: SVGGElement[]) {
     this.id = id;
     this.leaves = leaves;
+    this.groups = groups;
     this.cumulative = [];
     let acc = 0;
     for (const l of leaves) {
@@ -315,6 +319,14 @@ class SvgElementHandle implements RenderedElement {
     }
     this.durationMs = acc;
     leaves.forEach((l) => l.prepare());
+  }
+
+  /** Persistent translation, logical units y-up (the y-flip happens here). */
+  setOffset(dx: number, dy: number): void {
+    for (const g of this.groups) {
+      if (dx === 0 && dy === 0) g.removeAttribute("transform");
+      else g.setAttribute("transform", `translate(${dx.toFixed(1)} ${(-dy).toFixed(1)})`);
+    }
   }
 
   setProgress(t: number): void {
@@ -371,6 +383,152 @@ function nudgeTextsIntoCanvas(svg: SVGSVGElement): void {
   }
 }
 
+// ---- gesture-verb effects: stateless per-frame primitives on an overlay ----
+
+const HIGHLIGHT_COLOR = "#cf4632";
+const LASER_COLOR = "#d33827";
+
+/** Colored echo of an element's rendered nodes, used by pulse/glow. */
+function emphasisClone(g: SVGGElement, color: string, glow: boolean): SVGGElement {
+  const c = g.cloneNode(true) as SVGGElement;
+  c.removeAttribute("opacity");
+  c.style.opacity = "0";
+  c.style.pointerEvents = "none";
+  for (const p of Array.from(c.querySelectorAll("path"))) {
+    p.setAttribute("stroke", color);
+    if ((p.getAttribute("fill") ?? "none") !== "none") p.setAttribute("fill", color);
+    const w = parseFloat(p.getAttribute("stroke-width") ?? "3") || 3;
+    p.setAttribute("stroke-width", String(w + 1.5));
+  }
+  for (const t of Array.from(c.querySelectorAll("text"))) t.setAttribute("fill", color);
+  if (glow) c.style.filter = `drop-shadow(0 0 9px ${color})`;
+  return c;
+}
+
+function ellipseRingPath(box: BBox, color: string, rc: RoughSVG | null): SVGGElement {
+  const cx = box.x + box.w / 2;
+  const cy = toSvgY(box.y + box.h / 2);
+  const rx = box.w / 2 + 22;
+  const ry = box.h / 2 + 18;
+  const g = document.createElementNS(SVG_NS, "g") as SVGGElement;
+  g.style.pointerEvents = "none";
+  if (rc) {
+    g.appendChild(rc.ellipse(cx, cy, rx * 2, ry * 2, { stroke: color, strokeWidth: 3.5, roughness: 1.6, fill: undefined, seed: 7 }));
+  } else {
+    const p = document.createElementNS(SVG_NS, "path");
+    p.setAttribute("d", `M${cx - rx} ${cy} A${rx} ${ry} 0 1 0 ${cx + rx} ${cy} A${rx} ${ry} 0 1 0 ${cx - rx} ${cy}`);
+    p.setAttribute("stroke", color);
+    p.setAttribute("stroke-width", "3.5");
+    p.setAttribute("fill", "none");
+    g.appendChild(p);
+  }
+  return g;
+}
+
+interface HighlightNodes {
+  nodes: SVGGElement[];
+  ringPaths: { el: SVGPathElement; len: number }[];
+}
+
+function makeEffects(
+  svg: SVGSVGElement,
+  overlay: SVGGElement,
+  leafNodes: Map<string, { g: SVGGElement; leaf: Exclude<Drawable, { kind: "group" }> }[]>,
+  rc: RoughSVG | null,
+): BackendEffects {
+  const active = new Map<string, HighlightNodes>();
+  const keyOf = (ids: string[]) => ids.join("|");
+  let pointer: SVGGElement | null = null;
+
+  const removeHighlight = (key: string) => {
+    const st = active.get(key);
+    if (!st) return;
+    st.nodes.forEach((n) => n.remove());
+    active.delete(key);
+  };
+
+  return {
+    setHighlight(ids: string[], effect: HighlightEffect, t: number, box: BBox | null, color?: string): void {
+      const col = color ?? HIGHLIGHT_COLOR;
+      const key = keyOf(ids);
+      // A circle without a box degrades to a pulse.
+      const kind: HighlightEffect = effect === "circle" && !box ? "pulse" : effect;
+      let st = active.get(key);
+      if (!st) {
+        st = { nodes: [], ringPaths: [] };
+        if (kind === "circle") {
+          const ring = ellipseRingPath(box!, col, rc);
+          overlay.appendChild(ring);
+          st.nodes.push(ring);
+          for (const p of Array.from(ring.querySelectorAll("path"))) {
+            const len = p.getTotalLength();
+            p.style.strokeDasharray = `${len}`;
+            p.style.strokeDashoffset = `${len}`;
+            st.ringPaths.push({ el: p, len });
+          }
+        } else {
+          for (const id of ids) {
+            for (const { g } of leafNodes.get(id) ?? []) {
+              const clone = emphasisClone(g, col, kind === "glow");
+              overlay.appendChild(clone);
+              st.nodes.push(clone);
+            }
+          }
+        }
+        active.set(key, st);
+      }
+      if (t >= 1) {
+        removeHighlight(key);
+        return;
+      }
+      if (kind === "circle") {
+        const reveal = Math.min(t / 0.3, 1);
+        const fade = t < 0.78 ? 1 : 1 - (t - 0.78) / 0.22;
+        for (const { el, len } of st.ringPaths) el.style.strokeDashoffset = `${len * (1 - reveal)}`;
+        st.nodes.forEach((n) => (n.style.opacity = String(0.95 * fade)));
+      } else if (kind === "glow") {
+        const swell = Math.sin(Math.PI * t);
+        st.nodes.forEach((n) => (n.style.opacity = String(0.7 * swell)));
+      } else {
+        // pulse: three throbs of the colored echo
+        const phase = Math.sin(Math.PI * t * 3) ** 2;
+        st.nodes.forEach((n) => (n.style.opacity = String(0.8 * phase)));
+      }
+    },
+
+    endHighlight(ids: string[]): void {
+      removeHighlight(keyOf(ids));
+    },
+
+    setPointer(p: Pt | null): void {
+      if (!p) {
+        pointer?.setAttribute("display", "none");
+        return;
+      }
+      if (!pointer) {
+        pointer = document.createElementNS(SVG_NS, "g") as SVGGElement;
+        pointer.style.pointerEvents = "none";
+        const halo = document.createElementNS(SVG_NS, "circle");
+        halo.setAttribute("r", "11");
+        halo.setAttribute("fill", LASER_COLOR);
+        halo.setAttribute("opacity", "0.28");
+        const core = document.createElementNS(SVG_NS, "circle");
+        core.setAttribute("r", "4.5");
+        core.setAttribute("fill", LASER_COLOR);
+        pointer.append(halo, core);
+        overlay.appendChild(pointer);
+      }
+      pointer.removeAttribute("display");
+      pointer.setAttribute("transform", `translate(${p[0].toFixed(1)} ${toSvgY(p[1]).toFixed(1)})`);
+    },
+
+    setCamera(box: BBox | null): void {
+      if (!box) svg.setAttribute("viewBox", `0 0 ${CANVAS.w} ${CANVAS.h}`);
+      else svg.setAttribute("viewBox", `${box.x.toFixed(1)} ${toSvgY(box.y + box.h).toFixed(1)} ${box.w.toFixed(1)} ${box.h.toFixed(1)}`);
+    },
+  };
+}
+
 function makeSvgBackend(opts: { name: string; label: string; description: string; sketchy: boolean }): BackendModule {
   return {
     name: opts.name,
@@ -385,7 +543,10 @@ function makeSvgBackend(opts: { name: string; label: string; description: string
       const rc = opts.sketchy ? rough.svg(svg) : null;
 
       const layers = { 0: document.createElementNS(SVG_NS, "g"), 1: document.createElementNS(SVG_NS, "g"), 2: document.createElementNS(SVG_NS, "g") };
-      svg.append(layers[0], layers[1], layers[2]);
+      // Overlay for gesture effects (highlight echoes, laser pointer) — always on top.
+      const overlay = document.createElementNS(SVG_NS, "g") as SVGGElement;
+      overlay.setAttribute("class", "cs-overlay");
+      svg.append(layers[0], layers[1], layers[2], overlay);
 
       // Paint order: z layer, then IR order within the layer.
       const leafNodes = new Map<string, { g: SVGGElement; leaf: Exclude<Drawable, { kind: "group" }> }[]>();
@@ -411,11 +572,12 @@ function makeSvgBackend(opts: { name: string; label: string; description: string
       // Handles need the nodes in the DOM (getTotalLength).
       const elements = new Map<string, RenderedElement>();
       for (const [id, entry] of leafNodes) {
-        elements.set(id, new SvgElementHandle(id, entry.map(({ g, leaf }) => makeLeafHandle(g, leaf))));
+        elements.set(id, new SvgElementHandle(id, entry.map(({ g, leaf }) => makeLeafHandle(g, leaf)), entry.map(({ g }) => g)));
       }
 
       return {
         elements,
+        effects: makeEffects(svg, overlay, leafNodes, rc),
         destroy: () => svg.remove(),
       };
     },

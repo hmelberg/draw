@@ -2,6 +2,20 @@
 
 Milestones from [BRIEF.md](BRIEF.md). Status as of 2026-08-18 (initial build session).
 
+## Post-brief extensions
+
+- **Gesture verbs (2026-08-19)**: the command language grew beyond speak/draw/pause with
+  `highlight` (pulse/circle/glow), `point` (laser pointer: tap/circle/underline),
+  `move` (translate by delta/waypoint path, easing, domain units), `show`/`hide`/`erase`
+  (visibility vs. animated un-sketch), `clear` (with `keep`), `camera` (zoom/pan/reset), and
+  `"blocking": false` on speak (talk while gesturing — the extension reserved by the brief).
+  The plan now precomputes a full scene state (visible ids, offsets, camera) per step
+  boundary, so step back/scrubbing stays exact. Gesture effects are implemented in the
+  custom-svg backends; other backends skip them gracefully. NOTE: `move` is a visual
+  translate only — dependents (labels, intersections, regions) do not follow. The semantic
+  variant (`morph`: param change + re-layout + tween) is deliberately deferred to M5, whose
+  diff/tween machinery is the right engine for it.
+
 ## Milestone status
 
 | Milestone | Status | Notes |

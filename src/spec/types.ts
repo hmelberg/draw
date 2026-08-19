@@ -89,12 +89,78 @@ export interface SpecElement {
   draw?: SpecDraw;
 }
 
+export type Easing = "linear" | "ease-in" | "ease-out" | "ease-in-out";
+export type HighlightEffect = "pulse" | "circle" | "glow";
+export type PointGesture = "tap" | "circle" | "underline";
+
+export interface HighlightArgs {
+  target: string[] | string;
+  effect?: HighlightEffect;
+  /** seconds */
+  duration?: number;
+  color?: string;
+}
+
+export interface PointArgs {
+  /** Element id (ref) or coordinates (domain units when a domain is declared). */
+  at: EndRef;
+  gesture?: PointGesture;
+  /** seconds */
+  duration?: number;
+}
+
+export interface MoveArgs {
+  target: string[] | string;
+  /** [dx, dy] delta — domain units when a domain is declared, else logical. */
+  by?: [number, number];
+  /** Waypoint offsets from the element's starting position; the last is the final offset. */
+  path?: [number, number][];
+  /** seconds */
+  duration?: number;
+  easing?: Easing;
+}
+
+export interface CameraArgs {
+  /** Element id (ref) or coordinates to center on. */
+  center?: EndRef;
+  /** Magnification: 1 = whole canvas, 2 = 2×, … */
+  zoom?: number;
+  /** Return to the full canvas. */
+  reset?: boolean;
+  /** seconds */
+  duration?: number;
+}
+
+export interface ClearArgs {
+  /** Ids to leave visible (e.g. the axes). */
+  keep?: string[] | string;
+}
+
 export interface Command {
   speak?: string;
+  /** With speak: false = start speaking and continue to the next command immediately. */
+  blocking?: boolean;
   draw?: string[] | string;
+  /** With draw/erase: animate the listed elements simultaneously. */
   parallel?: boolean;
   /** seconds */
   pause?: number;
+  /** Make elements visible instantly (inverse of hide). */
+  show?: string[] | string;
+  /** Make elements invisible instantly (they can be shown again). */
+  hide?: string[] | string;
+  /** Remove elements with a reverse hand-drawn animation, then keep them hidden. */
+  erase?: string[] | string;
+  /** Hide everything currently visible (except clear.keep). */
+  clear?: ClearArgs;
+  /** Temporary emphasis on visible elements. */
+  highlight?: HighlightArgs;
+  /** Laser pointer: travel to a target and gesture at it. */
+  point?: PointArgs;
+  /** Translate elements by a delta or along a path of offsets. */
+  move?: MoveArgs;
+  /** Zoom/pan the view. */
+  camera?: CameraArgs;
 }
 
 export interface Spec {

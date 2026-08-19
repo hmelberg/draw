@@ -39,7 +39,7 @@ No key? Everything except generation works — try the offline examples.
 | `src/layout/` | Canvas/scales, layout IR, tier-2/3 element layout, label collision solver, orchestrator |
 | `src/scenes/<name>/` | `manifest.json` (routing data, Loop 2) + `layout.ts` (geometry code, Loop 3) |
 | `src/lint/` | Deterministic visual lint (feeds the Loop-1 repair round) |
-| `src/render/` | Command planner, Player (speak/draw/pause sequencing), speech, backends (custom-svg/rough.js, jsxgraph, mermaid) |
+| `src/render/` | Command planner (scene state per step), Player (speak/draw/pause + gesture verbs: highlight, point, move, show/hide/erase, clear, camera), speech, backends (custom-svg/rough.js, jsxgraph, mermaid) |
 | `src/llm/` | BYOK Anthropic client, generation pipeline with capped repair rounds, prompts-as-data (`prompts/*.md`), raw-SVG baseline |
 | `src/harness/` | UI cards, benchmark set, logs/exemplars/improvement-packet store |
 

@@ -2,7 +2,7 @@
 // render(spec, container, options) -> { timeline, update(diff), lint() }.
 // Framework-free by design.
 
-import { layoutSpec, type LayoutResult } from "../layout/layout";
+import { domainMapping, elementBBoxes, layoutSpec, type LayoutResult } from "../layout/layout";
 import type { LintIssue } from "../lint/lint";
 import type { Spec } from "../spec/types";
 import { planCommands, type Plan } from "./plan";
@@ -70,7 +70,11 @@ export async function render(spec: Spec, container: HTMLElement, options: Render
 
   const measure = makeBrowserMeasure();
   const layout = layoutSpec(spec, measure);
-  const plan = planCommands(spec.commands, layout.order);
+  const bboxes = elementBBoxes(layout, measure);
+  const plan = planCommands(spec.commands, layout.order, {
+    bboxOf: (id) => bboxes.get(id) ?? null,
+    ...domainMapping(spec.domain),
+  });
 
   const backendApplies = backend.appliesTo(spec);
   let mounted: Awaited<ReturnType<typeof backend.mount>>;
@@ -95,7 +99,7 @@ export async function render(spec: Spec, container: HTMLElement, options: Render
     backend.supportsAnimation ? mounted.elements : new Map(),
     speech,
     caption,
-    { mode: options.mode, speed: options.speed },
+    { mode: options.mode, speed: options.speed, effects: backend.supportsAnimation ? mounted.effects : undefined },
     options.callbacks,
   );
 

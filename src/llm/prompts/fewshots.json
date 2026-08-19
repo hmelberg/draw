@@ -19,9 +19,12 @@
         { "draw": ["supply_curve", "label_S"] },
         { "speak": "Where the curves cross, the market clears." },
         { "draw": ["equilibrium_point", "guide_lines", "label_E", "label_Pstar", "label_Qstar"] },
+        { "speak": "This is the equilibrium.", "blocking": false },
+        { "point": { "at": { "ref": "equilibrium_point" }, "gesture": "circle" } },
         { "pause": 0.5 },
         { "speak": "Now suppose demand increases: the whole curve shifts to the right." },
-        { "draw": ["demand_shift_curve", "demand_shift_arrow", "label_D_shift"] }
+        { "draw": ["demand_shift_curve", "demand_shift_arrow", "label_D_shift"] },
+        { "highlight": { "target": ["demand_shift_curve"], "effect": "pulse" } }
       ]
     }
   },

@@ -75,3 +75,64 @@ describe("validateSpec", () => {
     expect(r.ok).toBe(false);
   });
 });
+
+describe("validateSpec — gesture verbs", () => {
+  const base = { template: "supply_demand" };
+
+  test("accepts every new verb in valid form", () => {
+    const r = validateSpec({
+      ...base,
+      commands: [
+        { speak: "look here", blocking: false },
+        { point: { at: { ref: "eq" }, gesture: "circle" } },
+        { highlight: { target: ["demand_curve"], effect: "pulse", duration: 2, color: "#c00" } },
+        { move: { target: ["demand_curve"], by: [10, 0], easing: "ease-out" } },
+        { move: { target: ["dot"], path: [[5, 5], [10, 0]] } },
+        { show: ["guides"] },
+        { hide: ["guides"] },
+        { erase: ["note"], parallel: true },
+        { clear: { keep: ["axes"] } },
+        { camera: { center: { ref: "eq" }, zoom: 2 } },
+        { camera: { reset: true } },
+      ],
+    });
+    expect(r.errors).toEqual([]);
+    expect(r.ok).toBe(true);
+  });
+
+  test("accepts bare-string targets on the new verbs", () => {
+    const r = validateSpec({
+      ...base,
+      commands: [{ hide: "guides" }, { highlight: { target: "demand_curve" } }, { move: { target: "dot", by: [1, 1] } }],
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  test("rejects two verbs on one command", () => {
+    const r = validateSpec({ ...base, commands: [{ hide: ["a"], show: ["b"] }] });
+    expect(r.ok).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/exactly one/i);
+  });
+
+  test("rejects blocking on a non-speak command", () => {
+    const r = validateSpec({ ...base, commands: [{ draw: ["axes"], blocking: false }] });
+    expect(r.ok).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/blocking/);
+  });
+
+  test("rejects a move without by or path", () => {
+    const r = validateSpec({ ...base, commands: [{ move: { target: ["a"] } }] });
+    expect(r.ok).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/by|path/);
+  });
+
+  test("rejects a point without a resolvable at", () => {
+    const r = validateSpec({ ...base, commands: [{ point: { at: { x: 5 } } }] });
+    expect(r.ok).toBe(false);
+  });
+
+  test("rejects a camera with no center/zoom/reset", () => {
+    const r = validateSpec({ ...base, commands: [{ camera: {} }] });
+    expect(r.ok).toBe(false);
+  });
+});

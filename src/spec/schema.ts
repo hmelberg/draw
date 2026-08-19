@@ -119,19 +119,89 @@ const elementSchema = {
   additionalProperties: false,
 };
 
+const idListSchema = (description: string) => ({
+  type: "array",
+  items: { type: "string" },
+  description,
+});
+
 const commandSchema = {
   type: "object",
   description:
-    "One playback command. Set EXACTLY ONE of speak / draw / pause. Commands run strictly in sequence; each completes before the next begins.",
+    "One playback command. Set EXACTLY ONE verb: speak / draw / pause / show / hide / erase / clear / highlight / point / move / camera. " +
+    "Commands run strictly in sequence; each completes before the next begins (except speak with blocking:false).",
   properties: {
     speak: { type: "string", description: "Narration sentence, spoken aloud and shown as a caption." },
-    draw: {
-      type: "array",
-      items: { type: "string" },
-      description: "Element ids to draw. Listed elements animate one after another unless parallel is true.",
+    blocking: {
+      type: "boolean",
+      description: "With speak: false starts the narration and immediately continues to the next command — use it to talk while pointing, highlighting, or drawing.",
     },
-    parallel: { type: "boolean", description: "With draw: animate the listed elements simultaneously." },
+    draw: idListSchema("Element ids to draw. Listed elements animate one after another unless parallel is true."),
+    parallel: { type: "boolean", description: "With draw/erase: animate the listed elements simultaneously." },
     pause: { type: "number", description: "Pause for this many seconds." },
+    show: idListSchema("Element ids to make visible instantly (inverse of hide; no animation)."),
+    hide: idListSchema("Element ids to make invisible instantly. Hidden elements still exist and can be shown again."),
+    erase: idListSchema("Element ids to remove with a reverse hand-drawn (un-sketch) animation, then keep hidden."),
+    clear: {
+      type: "object",
+      description: "Hide everything currently visible. Use {} to clear all, or keep to leave some ids on screen.",
+      properties: {
+        keep: idListSchema("Ids to leave visible (e.g. the axes)."),
+      },
+      additionalProperties: false,
+    },
+    highlight: {
+      type: "object",
+      description: "Temporarily emphasize visible elements, then return to normal. Great right after a speak line that refers to them.",
+      properties: {
+        target: idListSchema("Element ids to emphasize."),
+        effect: { type: "string", enum: ["pulse", "circle", "glow"], description: "pulse = throb (default); circle = hand-drawn ring around them; glow = colored halo." },
+        duration: { type: "number", description: "Seconds (default 1.5)." },
+        color: { type: "string", description: "Emphasis color, CSS color string." },
+      },
+      required: ["target"],
+      additionalProperties: false,
+    },
+    point: {
+      type: "object",
+      description: "A laser pointer travels to the target and gestures at it, then disappears. Combine with speak blocking:false to talk while pointing.",
+      properties: {
+        at: endRefSchema,
+        gesture: { type: "string", enum: ["tap", "circle", "underline"], description: "tap = dip at the spot (default); circle = trace a ring around it; underline = sweep beneath it." },
+        duration: { type: "number", description: "Seconds (default 2)." },
+      },
+      required: ["at"],
+      additionalProperties: false,
+    },
+    move: {
+      type: "object",
+      description:
+        "Translate elements by a delta or along a path of offsets. Moves ONLY the listed elements — attached labels, intersection points, or regions do NOT follow; move them explicitly or redraw derived elements.",
+      properties: {
+        target: idListSchema("Element ids to move together."),
+        by: { type: "array", items: { type: "number" }, minItems: 2, maxItems: 2, description: "[dx, dy] delta — domain units when a domain is declared, else logical units." },
+        path: {
+          type: "array",
+          items: { type: "array", items: { type: "number" }, minItems: 2, maxItems: 2 },
+          description: "Waypoint offsets from the element's starting position (same units as by); the last waypoint is the final offset. Use instead of by for curved or multi-leg motion.",
+        },
+        duration: { type: "number", description: "Seconds (default 1)." },
+        easing: { type: "string", enum: ["linear", "ease-in", "ease-out", "ease-in-out"], description: "Velocity profile (default ease-in-out)." },
+      },
+      required: ["target"],
+      additionalProperties: false,
+    },
+    camera: {
+      type: "object",
+      description: "Zoom/pan the view. Set reset:true to return to the full canvas.",
+      properties: {
+        center: endRefSchema,
+        zoom: { type: "number", description: "Magnification: 1 = whole canvas, 2 = 2× (default 2 when centering)." },
+        reset: { type: "boolean", description: "Return to the full canvas." },
+        duration: { type: "number", description: "Seconds (default 1.2)." },
+      },
+      additionalProperties: false,
+    },
   },
   additionalProperties: false,
 };
@@ -158,7 +228,13 @@ export const specSchema = {
       additionalProperties: false,
     },
     elements: { type: "array", items: elementSchema, description: "Tier-2/3 elements (also allowed alongside a template, for annotations)." },
-    commands: { type: "array", items: commandSchema, description: "The playback sequence: speak/draw/pause. Elements not mentioned in any draw command are drawn at the end automatically." },
+    commands: {
+      type: "array",
+      items: commandSchema,
+      description:
+        "The playback sequence: narration (speak), drawing (draw/pause), and gesture verbs (highlight/point/move/show/hide/erase/clear/camera). " +
+        "Elements not mentioned in any draw/show/hide/erase command are drawn at the end automatically.",
+    },
   },
   required: ["commands"],
   additionalProperties: false,
@@ -168,14 +244,22 @@ const ajv = new AjvCtor({ allErrors: true, strict: false });
 let structural: ValidateFunction | null = null;
 
 /**
- * The wire schema keeps `draw` as an array (structured-output-friendly), but the
+ * The wire schema keeps id lists as arrays (structured-output-friendly), but the
  * brief's spec examples also allow a bare string. Normalize before validating.
  */
 export function normalizeSpec(spec: unknown): unknown {
   if (typeof spec !== "object" || spec === null) return spec;
   const clone = JSON.parse(JSON.stringify(spec)) as { commands?: Command[] };
+  const toList = (v: string[] | string | undefined): string[] | undefined => (typeof v === "string" ? [v] : v);
   for (const cmd of clone.commands ?? []) {
-    if (typeof cmd?.draw === "string") cmd.draw = [cmd.draw];
+    if (!cmd) continue;
+    if (cmd.draw !== undefined) cmd.draw = toList(cmd.draw);
+    if (cmd.show !== undefined) cmd.show = toList(cmd.show);
+    if (cmd.hide !== undefined) cmd.hide = toList(cmd.hide);
+    if (cmd.erase !== undefined) cmd.erase = toList(cmd.erase);
+    if (cmd.clear?.keep !== undefined) cmd.clear.keep = toList(cmd.clear.keep);
+    if (cmd.highlight) cmd.highlight.target = toList(cmd.highlight.target)!;
+    if (cmd.move) cmd.move.target = toList(cmd.move.target)!;
   }
   return clone;
 }
@@ -195,10 +279,27 @@ function semanticErrors(spec: Spec): string[] {
     errors.push("spec has neither a template nor any elements — nothing to draw");
   }
 
+  const VERBS = ["speak", "draw", "pause", "show", "hide", "erase", "clear", "highlight", "point", "move", "camera"] as const;
   for (const [i, cmd] of (spec.commands ?? []).entries()) {
-    const kinds = (["speak", "draw", "pause"] as const).filter((k) => (cmd as Command)[k] !== undefined);
+    const kinds = VERBS.filter((k) => (cmd as Command)[k] !== undefined);
     if (kinds.length !== 1) {
-      errors.push(`commands[${i}] must set exactly one of speak/draw/pause (got: ${kinds.join(", ") || "none"})`);
+      errors.push(`commands[${i}] must set exactly one verb of ${VERBS.join("/")} (got: ${kinds.join(", ") || "none"})`);
+      continue;
+    }
+    const verb = kinds[0];
+    if (cmd.blocking !== undefined && verb !== "speak") errors.push(`commands[${i}]: blocking only applies to speak`);
+    if (cmd.parallel !== undefined && verb !== "draw" && verb !== "erase") errors.push(`commands[${i}]: parallel only applies to draw/erase`);
+    if (verb === "move" && !cmd.move!.by && !(cmd.move!.path && cmd.move!.path.length > 0)) {
+      errors.push(`commands[${i}]: move needs by ([dx, dy]) or a non-empty path`);
+    }
+    if (verb === "point") {
+      const at = cmd.point!.at;
+      if (!at || (at.ref === undefined && (at.x === undefined || at.y === undefined))) {
+        errors.push(`commands[${i}]: point.at needs ref (an element id) or x+y coordinates`);
+      }
+    }
+    if (verb === "camera" && !cmd.camera!.reset && cmd.camera!.center === undefined && cmd.camera!.zoom === undefined) {
+      errors.push(`commands[${i}]: camera needs center, zoom, or reset:true`);
     }
   }
 
